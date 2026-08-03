@@ -16,6 +16,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated/profil'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
 import { Route as AuthenticatedStellenIndexRouteImport } from './routes/_authenticated/stellen/index'
+import { Route as AuthenticatedStellenJobIdRouteImport } from './routes/_authenticated/stellen/$jobId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -52,6 +53,12 @@ const AuthenticatedStellenIndexRoute =
     path: '/stellen/',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedStellenJobIdRoute =
+  AuthenticatedStellenJobIdRouteImport.update({
+    id: '/stellen/$jobId',
+    path: '/stellen/$jobId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -59,6 +66,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/profil': typeof AuthenticatedProfilRoute
   '/api/chat': typeof ApiChatRoute
+  '/stellen/$jobId': typeof AuthenticatedStellenJobIdRoute
   '/stellen/': typeof AuthenticatedStellenIndexRoute
 }
 export interface FileRoutesByTo {
@@ -67,6 +75,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/profil': typeof AuthenticatedProfilRoute
   '/api/chat': typeof ApiChatRoute
+  '/stellen/$jobId': typeof AuthenticatedStellenJobIdRoute
   '/stellen': typeof AuthenticatedStellenIndexRoute
 }
 export interface FileRoutesById {
@@ -77,14 +86,28 @@ export interface FileRoutesById {
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
   '/api/chat': typeof ApiChatRoute
+  '/_authenticated/stellen/$jobId': typeof AuthenticatedStellenJobIdRoute
   '/_authenticated/stellen/': typeof AuthenticatedStellenIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
-    '/' | '/auth' | '/dashboard' | '/profil' | '/api/chat' | '/stellen/'
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/profil'
+    | '/api/chat'
+    | '/stellen/$jobId'
+    | '/stellen/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/auth' | '/dashboard' | '/profil' | '/api/chat' | '/stellen'
+  to:
+    | '/'
+    | '/auth'
+    | '/dashboard'
+    | '/profil'
+    | '/api/chat'
+    | '/stellen/$jobId'
+    | '/stellen'
   id:
     | '__root__'
     | '/'
@@ -93,6 +116,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dashboard'
     | '/_authenticated/profil'
     | '/api/chat'
+    | '/_authenticated/stellen/$jobId'
     | '/_authenticated/stellen/'
   fileRoutesById: FileRoutesById
 }
@@ -154,18 +178,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedStellenIndexRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/stellen/$jobId': {
+      id: '/_authenticated/stellen/$jobId'
+      path: '/stellen/$jobId'
+      fullPath: '/stellen/$jobId'
+      preLoaderRoute: typeof AuthenticatedStellenJobIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
+  AuthenticatedStellenJobIdRoute: typeof AuthenticatedStellenJobIdRoute
   AuthenticatedStellenIndexRoute: typeof AuthenticatedStellenIndexRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedProfilRoute: AuthenticatedProfilRoute,
+  AuthenticatedStellenJobIdRoute: AuthenticatedStellenJobIdRoute,
   AuthenticatedStellenIndexRoute: AuthenticatedStellenIndexRoute,
 }
 
