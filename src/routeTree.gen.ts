@@ -12,9 +12,11 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedBewerbungenRouteImport } from './routes/_authenticated/bewerbungen'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedDokumenteRouteImport } from './routes/_authenticated/dokumente'
 import { Route as AuthenticatedEinstellungenRouteImport } from './routes/_authenticated/einstellungen'
+import { Route as AuthenticatedInterviewRouteImport } from './routes/_authenticated/interview'
 import { Route as AuthenticatedMatchRouteImport } from './routes/_authenticated/match'
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated/profil'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
@@ -35,6 +37,12 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedBewerbungenRoute =
+  AuthenticatedBewerbungenRouteImport.update({
+    id: '/bewerbungen',
+    path: '/bewerbungen',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -51,6 +59,11 @@ const AuthenticatedEinstellungenRoute =
     path: '/einstellungen',
     getParentRoute: () => AuthenticatedRouteRoute,
   } as any)
+const AuthenticatedInterviewRoute = AuthenticatedInterviewRouteImport.update({
+  id: '/interview',
+  path: '/interview',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedMatchRoute = AuthenticatedMatchRouteImport.update({
   id: '/match',
   path: '/match',
@@ -82,9 +95,11 @@ const AuthenticatedStellenJobIdRoute =
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/bewerbungen': typeof AuthenticatedBewerbungenRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/dokumente': typeof AuthenticatedDokumenteRoute
   '/einstellungen': typeof AuthenticatedEinstellungenRoute
+  '/interview': typeof AuthenticatedInterviewRoute
   '/match': typeof AuthenticatedMatchRoute
   '/profil': typeof AuthenticatedProfilRoute
   '/api/chat': typeof ApiChatRoute
@@ -94,9 +109,11 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/auth': typeof AuthRoute
+  '/bewerbungen': typeof AuthenticatedBewerbungenRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/dokumente': typeof AuthenticatedDokumenteRoute
   '/einstellungen': typeof AuthenticatedEinstellungenRoute
+  '/interview': typeof AuthenticatedInterviewRoute
   '/match': typeof AuthenticatedMatchRoute
   '/profil': typeof AuthenticatedProfilRoute
   '/api/chat': typeof ApiChatRoute
@@ -108,9 +125,11 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
   '/auth': typeof AuthRoute
+  '/_authenticated/bewerbungen': typeof AuthenticatedBewerbungenRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/dokumente': typeof AuthenticatedDokumenteRoute
   '/_authenticated/einstellungen': typeof AuthenticatedEinstellungenRoute
+  '/_authenticated/interview': typeof AuthenticatedInterviewRoute
   '/_authenticated/match': typeof AuthenticatedMatchRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
   '/api/chat': typeof ApiChatRoute
@@ -122,9 +141,11 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/auth'
+    | '/bewerbungen'
     | '/dashboard'
     | '/dokumente'
     | '/einstellungen'
+    | '/interview'
     | '/match'
     | '/profil'
     | '/api/chat'
@@ -134,9 +155,11 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/auth'
+    | '/bewerbungen'
     | '/dashboard'
     | '/dokumente'
     | '/einstellungen'
+    | '/interview'
     | '/match'
     | '/profil'
     | '/api/chat'
@@ -147,9 +170,11 @@ export interface FileRouteTypes {
     | '/'
     | '/_authenticated'
     | '/auth'
+    | '/_authenticated/bewerbungen'
     | '/_authenticated/dashboard'
     | '/_authenticated/dokumente'
     | '/_authenticated/einstellungen'
+    | '/_authenticated/interview'
     | '/_authenticated/match'
     | '/_authenticated/profil'
     | '/api/chat'
@@ -187,6 +212,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated/bewerbungen': {
+      id: '/_authenticated/bewerbungen'
+      path: '/bewerbungen'
+      fullPath: '/bewerbungen'
+      preLoaderRoute: typeof AuthenticatedBewerbungenRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -206,6 +238,13 @@ declare module '@tanstack/react-router' {
       path: '/einstellungen'
       fullPath: '/einstellungen'
       preLoaderRoute: typeof AuthenticatedEinstellungenRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/interview': {
+      id: '/_authenticated/interview'
+      path: '/interview'
+      fullPath: '/interview'
+      preLoaderRoute: typeof AuthenticatedInterviewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
     '/_authenticated/match': {
@@ -247,9 +286,11 @@ declare module '@tanstack/react-router' {
 }
 
 interface AuthenticatedRouteRouteChildren {
+  AuthenticatedBewerbungenRoute: typeof AuthenticatedBewerbungenRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedDokumenteRoute: typeof AuthenticatedDokumenteRoute
   AuthenticatedEinstellungenRoute: typeof AuthenticatedEinstellungenRoute
+  AuthenticatedInterviewRoute: typeof AuthenticatedInterviewRoute
   AuthenticatedMatchRoute: typeof AuthenticatedMatchRoute
   AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
   AuthenticatedStellenJobIdRoute: typeof AuthenticatedStellenJobIdRoute
@@ -257,9 +298,11 @@ interface AuthenticatedRouteRouteChildren {
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedBewerbungenRoute: AuthenticatedBewerbungenRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedDokumenteRoute: AuthenticatedDokumenteRoute,
   AuthenticatedEinstellungenRoute: AuthenticatedEinstellungenRoute,
+  AuthenticatedInterviewRoute: AuthenticatedInterviewRoute,
   AuthenticatedMatchRoute: AuthenticatedMatchRoute,
   AuthenticatedProfilRoute: AuthenticatedProfilRoute,
   AuthenticatedStellenJobIdRoute: AuthenticatedStellenJobIdRoute,
