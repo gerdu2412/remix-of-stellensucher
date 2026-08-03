@@ -36,8 +36,8 @@ function Dashboard() {
   const stats = [
     { label: "Stellen im Blick", value: jobList.length, icon: Briefcase, to: "/stellen" },
     { label: "Analysierte Matches", value: matchList.length, icon: Target, to: "/stellen" },
-    { label: "Unterlagen", value: (documents.data ?? []).length, icon: FileText, to: "/unterlagen" },
-    { label: "Aktive Bewerbungen", value: activeApplications, icon: MessagesSquare, to: "/pipeline" },
+    { label: "Unterlagen", value: (documents.data ?? []).length, icon: FileText, to: "/dokumente" },
+    { label: "Aktive Bewerbungen", value: activeApplications, icon: MessagesSquare, to: "/bewerbungen" },
   ];
 
   const jobById = new Map(jobList.map((j) => [j.id, j]));
@@ -118,7 +118,7 @@ function Dashboard() {
                 : "Noch kein Suchprofil hinterlegt."}
             </p>
             <Button asChild variant="outline" className="w-full">
-              <Link to="/suchprofil">Suchprofil bearbeiten</Link>
+              <Link to="/profil">Suchprofil bearbeiten</Link>
             </Button>
           </div>
         </Panel>
@@ -126,8 +126,8 @@ function Dashboard() {
 
       <div className="mt-6 grid gap-4 md:grid-cols-3">
         {[
-          { title: "Phase 1 – Suchprofil", text: "Profil schärfen und Stellen erfassen.", to: "/suchprofil" },
-          { title: "Phase 2–4 – Analyse & Unterlagen", text: "Match, Strategie, Anschreiben und CV.", to: "/unterlagen" },
+          { title: "Phase 1 – Suchprofil", text: "Profil schärfen und Stellen erfassen.", to: "/profil" },
+          { title: "Phase 2–4 – Analyse & Unterlagen", text: "Match, Strategie, Anschreiben und CV.", to: "/dokumente" },
           { title: "Phase 5 – Interview", text: "Fragen, Antworten und Simulation.", to: "/interview" },
         ].map((c) => (
           <Link key={c.title} to={c.to} className="panel panel-hover block p-5">
