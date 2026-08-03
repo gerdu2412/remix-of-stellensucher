@@ -10,33 +10,183 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedBewerbungenRouteImport } from './routes/_authenticated/bewerbungen'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedDokumenteRouteImport } from './routes/_authenticated/dokumente'
+import { Route as AuthenticatedEinstellungenRouteImport } from './routes/_authenticated/einstellungen'
+import { Route as AuthenticatedInterviewRouteImport } from './routes/_authenticated/interview'
+import { Route as AuthenticatedMatchRouteImport } from './routes/_authenticated/match'
+import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated/profil'
+import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as AuthenticatedStellenIndexRouteImport } from './routes/_authenticated/stellen/index'
+import { Route as AuthenticatedStellenJobIdRouteImport } from './routes/_authenticated/stellen/$jobId'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedBewerbungenRoute =
+  AuthenticatedBewerbungenRouteImport.update({
+    id: '/bewerbungen',
+    path: '/bewerbungen',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedDokumenteRoute = AuthenticatedDokumenteRouteImport.update({
+  id: '/dokumente',
+  path: '/dokumente',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedEinstellungenRoute =
+  AuthenticatedEinstellungenRouteImport.update({
+    id: '/einstellungen',
+    path: '/einstellungen',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedInterviewRoute = AuthenticatedInterviewRouteImport.update({
+  id: '/interview',
+  path: '/interview',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedMatchRoute = AuthenticatedMatchRouteImport.update({
+  id: '/match',
+  path: '/match',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProfilRoute = AuthenticatedProfilRouteImport.update({
+  id: '/profil',
+  path: '/profil',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const ApiChatRoute = ApiChatRouteImport.update({
+  id: '/api/chat',
+  path: '/api/chat',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedStellenIndexRoute =
+  AuthenticatedStellenIndexRouteImport.update({
+    id: '/stellen/',
+    path: '/stellen/',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
+const AuthenticatedStellenJobIdRoute =
+  AuthenticatedStellenJobIdRouteImport.update({
+    id: '/stellen/$jobId',
+    path: '/stellen/$jobId',
+    getParentRoute: () => AuthenticatedRouteRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/bewerbungen': typeof AuthenticatedBewerbungenRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/dokumente': typeof AuthenticatedDokumenteRoute
+  '/einstellungen': typeof AuthenticatedEinstellungenRoute
+  '/interview': typeof AuthenticatedInterviewRoute
+  '/match': typeof AuthenticatedMatchRoute
+  '/profil': typeof AuthenticatedProfilRoute
+  '/api/chat': typeof ApiChatRoute
+  '/stellen/$jobId': typeof AuthenticatedStellenJobIdRoute
+  '/stellen/': typeof AuthenticatedStellenIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auth': typeof AuthRoute
+  '/bewerbungen': typeof AuthenticatedBewerbungenRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/dokumente': typeof AuthenticatedDokumenteRoute
+  '/einstellungen': typeof AuthenticatedEinstellungenRoute
+  '/interview': typeof AuthenticatedInterviewRoute
+  '/match': typeof AuthenticatedMatchRoute
+  '/profil': typeof AuthenticatedProfilRoute
+  '/api/chat': typeof ApiChatRoute
+  '/stellen/$jobId': typeof AuthenticatedStellenJobIdRoute
+  '/stellen': typeof AuthenticatedStellenIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/bewerbungen': typeof AuthenticatedBewerbungenRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/dokumente': typeof AuthenticatedDokumenteRoute
+  '/_authenticated/einstellungen': typeof AuthenticatedEinstellungenRoute
+  '/_authenticated/interview': typeof AuthenticatedInterviewRoute
+  '/_authenticated/match': typeof AuthenticatedMatchRoute
+  '/_authenticated/profil': typeof AuthenticatedProfilRoute
+  '/api/chat': typeof ApiChatRoute
+  '/_authenticated/stellen/$jobId': typeof AuthenticatedStellenJobIdRoute
+  '/_authenticated/stellen/': typeof AuthenticatedStellenIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/bewerbungen'
+    | '/dashboard'
+    | '/dokumente'
+    | '/einstellungen'
+    | '/interview'
+    | '/match'
+    | '/profil'
+    | '/api/chat'
+    | '/stellen/$jobId'
+    | '/stellen/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to:
+    | '/'
+    | '/auth'
+    | '/bewerbungen'
+    | '/dashboard'
+    | '/dokumente'
+    | '/einstellungen'
+    | '/interview'
+    | '/match'
+    | '/profil'
+    | '/api/chat'
+    | '/stellen/$jobId'
+    | '/stellen'
+  id:
+    | '__root__'
+    | '/'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/bewerbungen'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/dokumente'
+    | '/_authenticated/einstellungen'
+    | '/_authenticated/interview'
+    | '/_authenticated/match'
+    | '/_authenticated/profil'
+    | '/api/chat'
+    | '/_authenticated/stellen/$jobId'
+    | '/_authenticated/stellen/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
+  ApiChatRoute: typeof ApiChatRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -48,22 +198,126 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_authenticated': {
+      id: '/_authenticated'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/bewerbungen': {
+      id: '/_authenticated/bewerbungen'
+      path: '/bewerbungen'
+      fullPath: '/bewerbungen'
+      preLoaderRoute: typeof AuthenticatedBewerbungenRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/dokumente': {
+      id: '/_authenticated/dokumente'
+      path: '/dokumente'
+      fullPath: '/dokumente'
+      preLoaderRoute: typeof AuthenticatedDokumenteRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/einstellungen': {
+      id: '/_authenticated/einstellungen'
+      path: '/einstellungen'
+      fullPath: '/einstellungen'
+      preLoaderRoute: typeof AuthenticatedEinstellungenRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/interview': {
+      id: '/_authenticated/interview'
+      path: '/interview'
+      fullPath: '/interview'
+      preLoaderRoute: typeof AuthenticatedInterviewRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/match': {
+      id: '/_authenticated/match'
+      path: '/match'
+      fullPath: '/match'
+      preLoaderRoute: typeof AuthenticatedMatchRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/profil': {
+      id: '/_authenticated/profil'
+      path: '/profil'
+      fullPath: '/profil'
+      preLoaderRoute: typeof AuthenticatedProfilRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/api/chat': {
+      id: '/api/chat'
+      path: '/api/chat'
+      fullPath: '/api/chat'
+      preLoaderRoute: typeof ApiChatRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/stellen/': {
+      id: '/_authenticated/stellen/'
+      path: '/stellen'
+      fullPath: '/stellen/'
+      preLoaderRoute: typeof AuthenticatedStellenIndexRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/stellen/$jobId': {
+      id: '/_authenticated/stellen/$jobId'
+      path: '/stellen/$jobId'
+      fullPath: '/stellen/$jobId'
+      preLoaderRoute: typeof AuthenticatedStellenJobIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedBewerbungenRoute: typeof AuthenticatedBewerbungenRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedDokumenteRoute: typeof AuthenticatedDokumenteRoute
+  AuthenticatedEinstellungenRoute: typeof AuthenticatedEinstellungenRoute
+  AuthenticatedInterviewRoute: typeof AuthenticatedInterviewRoute
+  AuthenticatedMatchRoute: typeof AuthenticatedMatchRoute
+  AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
+  AuthenticatedStellenJobIdRoute: typeof AuthenticatedStellenJobIdRoute
+  AuthenticatedStellenIndexRoute: typeof AuthenticatedStellenIndexRoute
+}
+
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedBewerbungenRoute: AuthenticatedBewerbungenRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedDokumenteRoute: AuthenticatedDokumenteRoute,
+  AuthenticatedEinstellungenRoute: AuthenticatedEinstellungenRoute,
+  AuthenticatedInterviewRoute: AuthenticatedInterviewRoute,
+  AuthenticatedMatchRoute: AuthenticatedMatchRoute,
+  AuthenticatedProfilRoute: AuthenticatedProfilRoute,
+  AuthenticatedStellenJobIdRoute: AuthenticatedStellenJobIdRoute,
+  AuthenticatedStellenIndexRoute: AuthenticatedStellenIndexRoute,
+}
+
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
+  ApiChatRoute: ApiChatRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
-
-import type { getRouter } from './router.tsx'
-import type { startInstance } from './start.ts'
-declare module '@tanstack/react-start' {
-  interface Register {
-    ssr: true
-    router: Awaited<ReturnType<typeof getRouter>>
-    config: Awaited<ReturnType<typeof startInstance.getOptions>>
-  }
-}

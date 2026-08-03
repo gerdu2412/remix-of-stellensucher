@@ -1,0 +1,133 @@
+import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
+import { useChat } from "@ai-sdk/react";
+import { DefaultChatTransport } from "ai";
+import { Loader2, Send } from "lucide-react";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { PageHeader, Panel, SectionTitle } from "@/components/shared/ui-bits";
+import { useJobs, useMasterCv } from "@/lib/queries";
+
+export const Route = createFileRoute("/_authenticated/interview")({
+  head: () => ({
+    meta: [
+      { title: "Interviewtraining – CareerPilot AI" },
+      { name: "description", content: "Realistische Interviewsimulation mit Feedback zu jeder Antwort." },
+      { property: "og:title", content: "Interviewtraining – CareerPilot AI" },
+      { property: "og:description", content: "Phase 5: Interviewsimulation und Feedback." },
+    ],
+  }),
+  component: InterviewPage,
+});
+
+const TYPES = [
+  { value: "hr", label: "HR-Interview" },
+  { value: "fach", label: "Fachinterview" },
+  { value: "management", label: "Management-Interview" },
+  { value: "stress", label: "Stressinterview" },
+  { value: "final", label: "Finalrunde" },
+];
+
+function InterviewPage() {
+  const jobs = useJobs();
+  const cv = useMasterCv();
+  const [jobId, setJobId] = useState("");
+  const [type, setType] = useState("hr");
+  const [input, setInput] = useState("");
+
+  const job = (jobs.data ?? []).find((j) => j.id === jobId);
+  const setup = `Interviewtyp: ${type}. Stelle: ${job ? `${job.title} bei ${job.company}\n${job.description ?? ""}` : "allgemein"}.\nLebenslauf der Kandidatin oder des Kandidaten:\n${cv.data?.extracted_text ?? "(nicht hinterlegt)"}`;
+
+  const { messages, sendMessage, status } = useChat({
+    transport: new DefaultChatTransport({ api: "/api/chat" }),
+    onError: (error) => toast.error(error.message),
+  });
+  const isLoading = status === "submitted" || status === "streaming";
+
+  function submit(text: string) {
+    if (!text.trim()) return;
+    sendMessage({ text }, { body: { setup } });
+    setInput("");
+  }
+
+  return (
+    <div>
+      <PageHeader
+        title="Interviewtraining"
+        description="Phase 5: Simulieren Sie ein Gespräch und erhalten Sie nach jeder Antwort Feedback."
+      />
+      <div className="grid gap-4 lg:grid-cols-[300px_1fr]">
+        <Panel className="space-y-4">
+          <SectionTitle>Rahmen</SectionTitle>
+          <Select value={jobId} onValueChange={setJobId}>
+            <SelectTrigger>
+              <SelectValue placeholder="Stelle wählen" />
+            </SelectTrigger>
+            <SelectContent>
+              {(jobs.data ?? []).map((j) => (
+                <SelectItem key={j.id} value={j.id}>
+                  {j.title} · {j.company}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={type} onValueChange={setType}>
+            <SelectTrigger>
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {TYPES.map((t) => (
+                <SelectItem key={t.value} value={t.value}>
+                  {t.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Button className="w-full" onClick={() => submit("Bitte starte die Interviewsimulation mit der ersten Frage.")}>
+            Simulation starten
+          </Button>
+          <Button variant="outline" className="w-full" onClick={() => submit("Gesamtfeedback")}>
+            Gesamtfeedback anfordern
+          </Button>
+        </Panel>
+
+        <Panel className="flex min-h-[60vh] flex-col">
+          <div className="flex-1 space-y-4 overflow-y-auto pr-1">
+            {messages.length === 0 && (
+              <p className="text-sm text-muted-foreground">
+                Wählen Sie eine Stelle und den Interviewtyp und starten Sie die Simulation.
+              </p>
+            )}
+            {messages.map((message) => (
+              <div
+                key={message.id}
+                className={
+                  message.role === "user"
+                    ? "ml-auto max-w-[85%] rounded-lg bg-primary px-4 py-2 text-sm text-primary-foreground"
+                    : "max-w-[85%] rounded-lg border border-border bg-card px-4 py-2 text-sm"
+                }
+              >
+                {message.parts.map((part, i) => (part.type === "text" ? <span key={i}>{part.text}</span> : null))}
+              </div>
+            ))}
+            {isLoading && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
+          </div>
+          <form
+            className="mt-4 flex gap-2"
+            onSubmit={(e) => {
+              e.preventDefault();
+              submit(input);
+            }}
+          >
+            <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Ihre Antwort …" />
+            <Button type="submit" disabled={isLoading} aria-label="Senden">
+              <Send className="size-4" />
+            </Button>
+          </form>
+        </Panel>
+      </div>
+    </div>
+  );
+}
