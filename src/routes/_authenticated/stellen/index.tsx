@@ -566,6 +566,58 @@ function StellenPage() {
         </Accordion>
       </Panel>
 
+      <Dialog open={fixOpen} onOpenChange={setFixOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Fehlerbehebung Quellen</DialogTitle>
+            <DialogDescription>
+              Diese Quellen lieferten keine Anzeigen oder meldeten einen Fehler und werden in der Übersicht ausgeblendet.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[50vh] space-y-3 overflow-y-auto">
+            {problemSources.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aktuell keine problematischen Quellen.</p>
+            ) : (
+              problemSources.map((s) => (
+                <div key={s.source} className="rounded-lg border border-border p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium">{s.source}</p>
+                    <span className="text-xs text-muted-foreground">
+                      {s.runs} Abfragen · {s.scanned} durchsucht
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-destructive">
+                    {s.messages.length ? s.messages.join(" · ") : "Keine Treffer geliefert (Blocker, Limit oder Suchbegriffe zu eng)."}
+                  </p>
+                  {s.url ? (
+                    <a
+                      href={s.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-flex items-center gap-1 text-xs hover:underline"
+                    >
+                      Quelle manuell öffnen <ExternalLink className="size-3" />
+                    </a>
+                  ) : null}
+                </div>
+              ))
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={async () => {
+                setFixOpen(false);
+                await updateFeeds();
+              }}
+              disabled={updating}
+            >
+              {updating ? <Loader2 className="mr-2 size-4 animate-spin" /> : <RefreshCw className="mr-2 size-4" />}
+              Erneut versuchen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <div className="mb-4 flex flex-col gap-3 sm:flex-row">
         <div className="flex-1 space-y-1.5">
           <Label htmlFor="suche" className="sr-only">
