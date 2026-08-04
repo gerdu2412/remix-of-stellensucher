@@ -176,6 +176,38 @@ function StellenPage() {
     }));
   }, [portals]);
 
+  const runGroups = useMemo(() => {
+    if (!run) return [] as {
+      source: string;
+      url: string;
+      runs: number;
+      scanned: number;
+      matched: number;
+      available: number;
+      errors: number;
+      messages: string[];
+    }[];
+    const map = new Map<string, { source: string; url: string; runs: number; scanned: number; matched: number; available: number; errors: number; messages: string[] }>();
+    for (const s of run.sources) {
+      const prev = map.get(s.source);
+      map.set(s.source, {
+        source: s.source,
+        url: prev?.url || s.url,
+        runs: (prev?.runs ?? 0) + 1,
+        scanned: (prev?.scanned ?? 0) + s.scanned,
+        matched: (prev?.matched ?? 0) + s.matched,
+        available: (prev?.available ?? 0) + s.available,
+        errors: (prev?.errors ?? 0) + (s.error ? 1 : 0),
+        messages: s.error && !(prev?.messages ?? []).includes(s.error) ? [...(prev?.messages ?? []), s.error] : (prev?.messages ?? []),
+      });
+    }
+    return [...map.values()];
+  }, [run]);
+
+  const okSources = runGroups.filter((s) => s.errors === 0 && s.scanned > 0);
+  const problemSources = runGroups.filter((s) => s.errors > 0 || s.scanned === 0);
+  const statsByName = useMemo(() => new Map(runGroups.map((s) => [s.source.toLowerCase(), s])), [runGroups]);
+
   async function importJob() {
     if (raw.trim().length < 30) {
       toast.error("Bitte den Ausschreibungstext einfügen.");
