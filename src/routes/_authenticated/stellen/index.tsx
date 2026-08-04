@@ -516,17 +516,20 @@ function StellenPage() {
             </AccordionTrigger>
             <AccordionContent>
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[480px] text-sm">
+                <table className="w-full min-w-[560px] text-sm">
                   <thead>
                     <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
                       <th className="py-2 pr-3 font-medium">Quelle</th>
-                      <th className="py-2 pr-3 text-right font-medium">Abfragen</th>
-                      <th className="py-2 pr-3 text-right font-medium">Suchbegriffe</th>
-                      <th className="py-2 text-right font-medium">Regionen</th>
+                      <th className="py-2 pr-3 font-medium">Abfragen</th>
+                      <th className="py-2 pr-3 text-right font-medium">Durchsucht</th>
+                      <th className="py-2 pr-3 text-right font-medium">Passend</th>
+                      <th className="py-2 text-right font-medium">Treffer gesamt</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {portalGroups.map((g) => (
+                    {portalGroups.map((g) => {
+                      const stats = statsByName.get(g.name.toLowerCase());
+                      return (
                       <tr key={g.name} className="border-b border-border/60 last:border-0">
                         <td className="py-2 pr-3">
                           <a
@@ -538,17 +541,22 @@ function StellenPage() {
                             {g.name} <ExternalLink className="size-3" />
                           </a>
                         </td>
-                        <td className="py-2 pr-3 text-right tabular-nums">{g.links}</td>
-                        <td className="py-2 pr-3 text-right tabular-nums text-muted-foreground">{g.terms}</td>
-                        <td className="py-2 text-right tabular-nums text-muted-foreground">{g.regions}</td>
+                        <td className="py-2 pr-3 text-muted-foreground tabular-nums">{g.links}</td>
+                        <td className="py-2 pr-3 text-right tabular-nums">{stats ? stats.scanned : "–"}</td>
+                        <td className="py-2 pr-3 text-right tabular-nums font-medium">{stats ? stats.matched : "–"}</td>
+                        <td className="py-2 text-right tabular-nums text-muted-foreground">
+                          {stats ? stats.available.toLocaleString("de-DE") : "–"}
+                        </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                   <tfoot>
                     <tr className="border-t border-border font-medium">
                       <td className="py-2 pr-3">Gesamt</td>
-                      <td className="py-2 pr-3 text-right tabular-nums">{portals.length}</td>
+                      <td className="py-2 pr-3 tabular-nums">{portals.length}</td>
                       <td className="py-2" colSpan={2} />
+                      <td className="py-2" />
                     </tr>
                   </tfoot>
                 </table>
