@@ -1,12 +1,14 @@
 import {
   crawlJobRoom,
   crawlJobsCh,
+  crawlMetajob,
   crawlMoovijob,
+  crawlNomado24,
   crawlStepstoneAt,
   type CrawlResult,
 } from "./jobcrawler.server";
 import { companyCareersUrl, companyWebsiteUrl, portalSearchLinks, regionalPortalLinks, type PortalLink } from "./joblinks";
-import { searchAdzuna, searchCareerjet, searchJooble } from "./jobaggregators.server";
+import { searchAdzuna, searchCareerjet, searchJooble, searchTechmap, searchTheirStack } from "./jobaggregators.server";
 
 const BASE = "https://rest.arbeitsagentur.de/jobboerse/jobsuche-service";
 const API_KEY = "jobboerse-jobsuche";
@@ -203,6 +205,8 @@ export async function searchFeeds(input: {
     crawlerTargets.push({ label: "Job-Room (CH/LI)", location: "Schweiz / Liechtenstein", run: () => crawlJobRoom(role) });
     crawlerTargets.push({ label: "jobs.ch", location: "Liechtenstein", run: () => crawlJobsCh(role, "Liechtenstein") });
     crawlerTargets.push({ label: "Moovijob (LU)", location: "Luxemburg", run: () => crawlMoovijob(role) });
+    crawlerTargets.push({ label: "Nomado24", location: "Remote / Deutschland", run: () => crawlNomado24(role) });
+    crawlerTargets.push({ label: "metajob.de", location: primaryLoc(), run: () => crawlMetajob(role, primaryLoc(true)) });
   }
 
   // --- Job-Aggregatoren (Adzuna, Jooble, Careerjet) ---
