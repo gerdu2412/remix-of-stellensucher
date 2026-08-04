@@ -49,6 +49,9 @@ const DEFAULT_TERMS = [
   "KI-Transformation",
   "Operational Excellence",
   "Business Consulting",
+  "ASPICE",
+  "Systemengineering",
+  "Systems Engineering",
 ];
 
 const ANY_REGION = "Egal (überall)";
