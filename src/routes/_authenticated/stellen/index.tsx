@@ -27,6 +27,7 @@ import {
 } from "@/components/shared/ui-bits";
 import { aiStructureJob } from "@/lib/ai.functions";
 import { searchJobFeeds } from "@/lib/jobsearch.functions";
+import { companyCareersUrl, companyWebsiteUrl, portalSearchLinks } from "@/lib/joblinks";
 import { useInsertRow, useJobs, useMatches, useSearchProfile } from "@/lib/queries";
 
 type FeedRun = Awaited<ReturnType<typeof searchJobFeeds>>;
@@ -66,6 +67,17 @@ function StellenPage() {
     const text = `${j.title} ${j.company} ${j.location ?? ""}`.toLowerCase();
     return matchesStatus && text.includes(query.toLowerCase());
   });
+
+  const profileRoles = searchProfile.data?.target_roles?.length
+    ? searchProfile.data.target_roles
+    : ["Projektmanager", "Transformationsmanager"];
+  const profileLocations = searchProfile.data?.regions?.length ? searchProfile.data.regions : [""];
+  const portals =
+    run?.portals ??
+    profileRoles
+      .slice(0, 2)
+      .flatMap((role) => profileLocations.slice(0, 2).flatMap((loc) => portalSearchLinks(role, loc)))
+      .filter((link, i, all) => all.findIndex((o) => o.url === link.url) === i);
 
   async function importJob() {
     if (raw.trim().length < 30) {
