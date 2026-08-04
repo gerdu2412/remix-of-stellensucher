@@ -334,15 +334,16 @@ function StellenPage() {
           {filtered.map((job) => {
             const score = scoreByJob.get(job.id);
             return (
-              <Link
-                key={job.id}
-                to="/stellen/$jobId"
-                params={{ jobId: job.id }}
-                className="panel panel-hover flex flex-col gap-3 p-5"
-              >
+              <div key={job.id} className="panel panel-hover relative flex flex-col gap-3 p-5">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
-                    <h2 className="truncate font-display text-base font-semibold">{job.title}</h2>
+                    <Link
+                      to="/stellen/$jobId"
+                      params={{ jobId: job.id }}
+                      className="after:absolute after:inset-0 after:content-['']"
+                    >
+                      <h2 className="truncate font-display text-base font-semibold">{job.title}</h2>
+                    </Link>
                     <p className="truncate text-sm text-muted-foreground">{job.company}</p>
                   </div>
                   {typeof score === "number" && (
@@ -357,10 +358,7 @@ function StellenPage() {
                   <span>{job.location ?? "Ort offen"}</span>
                   {job.remote_share && <span>· {job.remote_share}</span>}
                 </div>
-                <div
-                  className="flex flex-wrap items-center gap-3 text-xs"
-                  onClick={(e) => e.stopPropagation()}
-                >
+                <div className="relative z-10 flex flex-wrap items-center gap-3 text-xs">
                   {job.original_url && (
                     <a
                       href={job.original_url}
@@ -389,7 +387,7 @@ function StellenPage() {
                   </a>
                   {job.source && <span className="text-muted-foreground">Quelle: {job.source}</span>}
                 </div>
-              </Link>
+              </div>
             );
           })}
         </div>
