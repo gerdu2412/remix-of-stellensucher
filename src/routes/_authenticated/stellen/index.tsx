@@ -150,13 +150,13 @@ function StellenPage() {
     setActiveTerms((prev) => (prev.includes(value) ? prev : [...prev, value]));
     setNewTerm("");
   }
-  const profileLocations = searchLocations.length ? searchLocations : [""];
-  const portals =
-    run?.portals ??
-    profileRoles
-      .slice(0, 2)
-      .flatMap((role) => profileLocations.slice(0, 2).flatMap((loc) => portalSearchLinks(role, loc)))
+  const portals = useMemo(() => {
+    const roles = (selectedTerms.length ? selectedTerms : profileRoles).slice(0, 8);
+    const locations = (searchLocations.length ? searchLocations : [""]).slice(0, 5);
+    return roles
+      .flatMap((role) => locations.flatMap((loc) => portalSearchLinks(role, loc)))
       .filter((link, i, all) => all.findIndex((o) => o.url === link.url) === i);
+  }, [selectedTerms.join("|"), searchLocations.join("|"), profileRoles.join("|")]);
 
   async function importJob() {
     if (raw.trim().length < 30) {
