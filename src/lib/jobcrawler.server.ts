@@ -43,8 +43,8 @@ function stripHtml(value: string): string {
 }
 
 /** Alle JobPosting-Objekte aus den JSON-LD-Bloecken einer Seite. */
-function jsonLdJobs(html: string): Record<string, any>[] {
-  const out: Record<string, any>[] = [];
+function jsonLdJobs(html: string): any[] {
+  const out: any[] = [];
   const blocks = html.matchAll(/<script[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi);
   for (const block of blocks) {
     let parsed: unknown;
@@ -56,7 +56,7 @@ function jsonLdJobs(html: string): Record<string, any>[] {
     const walk = (node: unknown) => {
       if (Array.isArray(node)) return node.forEach(walk);
       if (!node || typeof node !== "object") return;
-      const obj = node as Record<string, any>;
+      const obj = node as any;
       if (obj["@type"] === "JobPosting") out.push(obj);
       Object.values(obj).forEach(walk);
     };
@@ -65,7 +65,7 @@ function jsonLdJobs(html: string): Record<string, any>[] {
   return out;
 }
 
-function fromJsonLd(job: Record<string, any>, fallbackCountry: string): CrawledJob | null {
+function fromJsonLd(job: any, fallbackCountry: string): CrawledJob | null {
   const title = typeof job.title === "string" ? job.title.trim() : "";
   const url = typeof job.url === "string" ? job.url : "";
   if (!title || !url) return null;
@@ -110,7 +110,7 @@ export async function crawlStepstoneAt(role: string, location: string): Promise<
     let depth = 0;
     let end = -1;
     for (let i = arrayStart; i < html.length; i += 1) {
-      const c = html[i];
+      const c = html[i]!;
       if (c === "[") depth += 1;
       else if (c === "]") {
         depth -= 1;
@@ -122,7 +122,7 @@ export async function crawlStepstoneAt(role: string, location: string): Promise<
     }
     if (end > 0) {
       try {
-        const items = JSON.parse(html.slice(arrayStart, end)) as Record<string, any>[];
+        const items = JSON.parse(html.slice(arrayStart, end)) as any[];
         for (const item of items) {
           if (!item?.title || !item?.url) continue;
           const href = String(item.url).startsWith("http")
