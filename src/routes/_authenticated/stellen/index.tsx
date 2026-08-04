@@ -33,6 +33,24 @@ import { useInsertRow, useJobs, useMatches, useSearchProfile } from "@/lib/queri
 
 type FeedRun = Awaited<ReturnType<typeof searchJobFeeds>>;
 
+const DEFAULT_TERMS = [
+  "Strategieentwicklung",
+  "Unternehmensentwicklung",
+  "Digitale Transformation",
+  "Business Transformation",
+  "Organisationsentwicklung",
+  "Prozessmanagement",
+  "Prozessoptimierung",
+  "Projektmanagement",
+  "Programmmanagement",
+  "Produktmanagement",
+  "Business Excellence",
+  "Innovation Management",
+  "KI-Transformation",
+  "Operational Excellence",
+  "Business Consulting",
+];
+
 export const Route = createFileRoute("/_authenticated/stellen/")({
   head: () => ({
     meta: [
@@ -57,6 +75,9 @@ function StellenPage() {
   const [query, setQuery] = useState("");
   const [updating, setUpdating] = useState(false);
   const [run, setRun] = useState<(FeedRun & { imported: number }) | null>(null);
+  const [customTerms, setCustomTerms] = useState<string[]>([]);
+  const [newTerm, setNewTerm] = useState("");
+  const [activeTerms, setActiveTerms] = useState<string[]>(DEFAULT_TERMS);
 
   const matchByJob = useMemo(
     () => new Map((matches.data ?? []).map((m) => [m.job_posting_id, m])),
@@ -72,6 +93,23 @@ function StellenPage() {
   const profileRoles = searchProfile.data?.target_roles?.length
     ? searchProfile.data.target_roles
     : ["Projektmanager", "Transformationsmanager"];
+  const allTerms = useMemo(
+    () => [...new Set([...profileRoles, ...DEFAULT_TERMS, ...customTerms])],
+    [profileRoles.join("|"), customTerms],
+  );
+  const selectedTerms = activeTerms.filter((t) => allTerms.includes(t));
+
+  function toggleTerm(term: string) {
+    setActiveTerms((prev) => (prev.includes(term) ? prev.filter((t) => t !== term) : [...prev, term]));
+  }
+
+  function addTerm() {
+    const value = newTerm.trim();
+    if (!value) return;
+    if (!allTerms.includes(value)) setCustomTerms((prev) => [...prev, value]);
+    setActiveTerms((prev) => (prev.includes(value) ? prev : [...prev, value]));
+    setNewTerm("");
+  }
   const profileLocations = searchProfile.data?.regions?.length ? searchProfile.data.regions : [""];
   const portals =
     run?.portals ??
@@ -115,9 +153,10 @@ function StellenPage() {
     setUpdating(true);
     try {
       const profile = searchProfile.data;
+      const roles = selectedTerms.length ? selectedTerms : profileRoles;
       const result = await searchJobFeeds({
         data: {
-          roles: profile?.target_roles?.length ? profile.target_roles : ["Projektmanager", "Transformationsmanager"],
+          roles,
           locations: profile?.regions ?? [],
           excluded: profile?.excluded_industries ?? [],
           perQuery: 25,
@@ -198,37 +237,71 @@ function StellenPage() {
 
       <Panel className="mb-4">
         <Accordion type="multiple" defaultValue={["quellen"]}>
-          {run && (
-            <AccordionItem value="begriffe" className="border-0 border-b border-border">
+          <AccordionItem value="begriffe" className="border-0 border-b border-border">
               <AccordionTrigger className="py-1 hover:no-underline">
                 <div className="text-left">
                   <p className="font-display text-sm font-semibold">Suchbegriffe und Regionen</p>
                   <p className="text-xs font-normal text-muted-foreground">
-                    {[...new Set(run.sources.map((s) => s.query).filter(Boolean))].length} Suchbegriffe ·{" "}
-                    {[...new Set(run.sources.map((s) => s.location).filter(Boolean))].length} Regionen
+                    {selectedTerms.length} von {allTerms.length} Suchbegriffen aktiv ·{" "}
+                    {(searchProfile.data?.regions ?? []).length || "alle"} Regionen
                   </p>
                 </div>
               </AccordionTrigger>
               <AccordionContent className="pt-2">
-                <p className="text-xs uppercase tracking-wide text-muted-foreground">Verwendete Suchbegriffe</p>
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Suchbegriffe</p>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {[...new Set(run.sources.map((s) => s.query).filter(Boolean))].map((q) => (
-                    <span key={q} className="rounded-full border border-border px-3 py-1 text-xs">
-                      {q}
-                    </span>
-                  ))}
+                  {allTerms.map((term) => {
+                    const active = selectedTerms.includes(term);
+                    return (
+                      <button
+                        key={term}
+                        type="button"
+                        onClick={() => toggleTerm(term)}
+                        className={
+                          "rounded-full border px-3 py-1 text-xs transition " +
+                          (active
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border text-muted-foreground hover:bg-muted")
+                        }
+                      >
+                        {term}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Input
+                    value={newTerm}
+                    onChange={(e) => setNewTerm(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addTerm();
+                      }
+                    }}
+                    placeholder="Eigenen Suchbegriff hinzufügen …"
+                    className="max-w-xs"
+                  />
+                  <Button type="button" variant="outline" onClick={addTerm}>
+                    <Plus className="mr-2 size-4" /> Hinzufügen
+                  </Button>
                 </div>
                 <p className="mt-3 text-xs uppercase tracking-wide text-muted-foreground">Regionen</p>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {[...new Set(run.sources.map((s) => s.location).filter(Boolean))].map((l) => (
+                  {[
+                    ...new Set(
+                      run
+                        ? run.sources.map((s) => s.location).filter(Boolean)
+                        : (searchProfile.data?.regions ?? []).filter(Boolean),
+                    ),
+                  ].map((l) => (
                     <span key={l} className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">
                       {l}
                     </span>
                   ))}
                 </div>
               </AccordionContent>
-            </AccordionItem>
-          )}
+          </AccordionItem>
 
           <AccordionItem value="quellen" className="border-0">
             <AccordionTrigger className="py-1 hover:no-underline">
