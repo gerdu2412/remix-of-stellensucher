@@ -1,4 +1,5 @@
 /** Crawler fuer oeffentliche Stellenportale in DACH + Liechtenstein/Luxemburg. */
+import { renderHtmlSafe, renderHtml, renderProvider } from "./browserfetch.server";
 
 export type CrawledJob = {
   id: string;
@@ -22,19 +23,7 @@ const UA =
   "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36";
 
 async function getHtml(url: string): Promise<string> {
-  const res = await fetch(url, {
-    headers: {
-      "user-agent": UA,
-      accept: "text/html,application/xhtml+xml",
-      "accept-language": "de-DE,de;q=0.9,fr;q=0.8,en;q=0.7",
-      "sec-fetch-dest": "document",
-      "sec-fetch-mode": "navigate",
-      "sec-fetch-site": "none",
-      "upgrade-insecure-requests": "1",
-    },
-  });
-  if (!res.ok) throw new Error(`Antwort ${res.status}`);
-  return res.text();
+  return renderHtmlSafe(url);
 }
 
 function stripHtml(value: string): string {
@@ -252,4 +241,97 @@ export async function crawlMetajob(role: string, location: string): Promise<Craw
     .map((j) => fromJsonLd(j, "Deutschland"))
     .filter((j): j is CrawledJob => Boolean(j));
   return { source: "metajob.de", url, available: jobs.length, jobs };
+}
+
+/** True, sobald ein gehosteter Browser konfiguriert ist. */
+export function browserCrawlersEnabled(): boolean {
+  return renderProvider() !== "plain";
+}
+
+/** LinkedIn Jobs – gerenderte Trefferliste (Guest-Ansicht). */
+export async function crawlLinkedIn(role: string, location: string): Promise<CrawlResult> {
+  const loc = location || "Deutschland";
+  const url = `https://www.linkedin.com/jobs/search/?keywords=${encodeURIComponent(role)}&location=${encodeURIComponent(loc)}`;
+  const html = await renderHtml(url, 3500);
+  const jobs: CrawledJob[] = [];
+  const seen = new Set<string>();
+  const cards = html.matchAll(
+    /<a[^>]+href="(https:\/\/[a-z.]*linkedin\.com\/jobs\/view\/[^"?]+)[^"]*"[\s\S]{0,2500}?base-search-card__title"[^>]*>([\s\S]*?)<\/h3>[\s\S]{0,600}?base-search-card__subtitle"[^>]*>([\s\S]*?)<\/h4>[\s\S]{0,600}?job-search-card__location"[^>]*>([\s\S]*?)<\/span>/g,
+  );
+  for (const card of cards) {
+    const href = card[1]!;
+    if (seen.has(href)) continue;
+    seen.add(href);
+    const title = stripHtml(card[2] ?? "");
+    if (!title) continue;
+    jobs.push({
+      id: href,
+      title,
+      company: stripHtml(card[3] ?? "") || "Unbekannt",
+      location: stripHtml(card[4] ?? "") || loc,
+      country: loc,
+      publication_date: null,
+      url: href,
+      description: "",
+    });
+  }
+  if (!jobs.length) {
+    for (const j of jsonLdJobs(html).map((x) => fromJsonLd(x, loc))) if (j) jobs.push(j);
+  }
+  return { source: "LinkedIn Jobs", url, available: jobs.length, jobs };
+}
+
+/** Indeed – gerenderte Trefferliste (nur mit Browser-Dienst realistisch). */
+export async function crawlIndeed(role: string, location: string): Promise<CrawlResult> {
+  const url = `https://de.indeed.com/jobs?q=${encodeURIComponent(role)}${location ? `&l=${encodeURIComponent(location)}` : ""}`;
+  const html = await renderHtml(url, 4000);
+  const jobs: CrawledJob[] = [];
+  const seen = new Set<string>();
+  const cards = html.matchAll(
+    /<a[^>]+data-jk="([^"]+)"[\s\S]{0,1200}?<span[^>]*title="([^"]+)"[\s\S]{0,1500}?company_location[\s\S]{0,600}?>([\s\S]*?)<\/div>/g,
+  );
+  for (const card of cards) {
+    const href = `https://de.indeed.com/viewjob?jk=${card[1]}`;
+    if (seen.has(href)) continue;
+    seen.add(href);
+    const meta = stripHtml(card[3] ?? "");
+    jobs.push({
+      id: href,
+      title: stripHtml(card[2] ?? ""),
+      company: meta.split(/\s{2,}|·/)[0]?.trim() || "Unbekannt",
+      location: location || meta,
+      country: "Deutschland",
+      publication_date: null,
+      url: href,
+      description: "",
+    });
+  }
+  if (!jobs.length) {
+    for (const j of jsonLdJobs(html).map((x) => fromJsonLd(x, "Deutschland"))) if (j) jobs.push(j);
+  }
+  return { source: "Indeed", url, available: jobs.length, jobs };
+}
+
+/** StepStone Deutschland – gerenderte Trefferliste. */
+export async function crawlStepstoneDe(role: string, location: string): Promise<CrawlResult> {
+  const path = location
+    ? `${encodeURIComponent(role)}/in-${encodeURIComponent(location)}`
+    : encodeURIComponent(role);
+  const url = `https://www.stepstone.de/jobs/${path}`;
+  const html = await renderHtml(url, 3500);
+  const jobs = jsonLdJobs(html)
+    .map((j) => fromJsonLd(j, "Deutschland"))
+    .filter((j): j is CrawledJob => Boolean(j));
+  const total = html.match(/"totalResults?":\s*(\d+)/);
+  return { source: "StepStone Deutschland", url, available: total ? Number(total[1]) : jobs.length, jobs };
+}
+
+/** Xing Jobs – gerenderte Trefferliste. */
+export async function crawlXing(role: string, location: string): Promise<CrawlResult> {
+  const url = `https://www.xing.com/jobs/search?keywords=${encodeURIComponent(role)}${location ? `&location=${encodeURIComponent(location)}` : ""}`;
+  const html = await renderHtml(url, 3500);
+  const jobs = jsonLdJobs(html)
+    .map((j) => fromJsonLd(j, "Deutschland"))
+    .filter((j): j is CrawledJob => Boolean(j));
+  return { source: "Xing Jobs", url, available: jobs.length, jobs };
 }
