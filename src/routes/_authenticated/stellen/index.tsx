@@ -445,21 +445,7 @@ function StellenPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {[...run.sources
-                    .reduce((map, s) => {
-                      const prev = map.get(s.source);
-                      map.set(s.source, {
-                        source: s.source,
-                        url: prev?.url || s.url,
-                        runs: (prev?.runs ?? 0) + 1,
-                        scanned: (prev?.scanned ?? 0) + s.scanned,
-                        matched: (prev?.matched ?? 0) + s.matched,
-                        available: (prev?.available ?? 0) + s.available,
-                        errors: (prev?.errors ?? 0) + (s.error ? 1 : 0),
-                      });
-                      return map;
-                    }, new Map<string, { source: string; url: string; runs: number; scanned: number; matched: number; available: number; errors: number }>())
-                    .values()].map((s) => (
+                  {okSources.map((s) => (
                     <tr key={s.source} className="border-b border-border/60 last:border-0">
                       <td className="py-2 pr-3">
                         {s.url ? (
@@ -477,9 +463,7 @@ function StellenPage() {
                       </td>
                       <td className="py-2 pr-3 text-muted-foreground tabular-nums">{s.runs}</td>
                       <td className="py-2 pr-3 text-right tabular-nums">{s.scanned}</td>
-                      <td className="py-2 pr-3 text-right tabular-nums font-medium">
-                        {s.errors === s.runs ? <span className="text-destructive">Fehler</span> : s.matched}
-                      </td>
+                      <td className="py-2 pr-3 text-right tabular-nums font-medium">{s.matched}</td>
                       <td className="py-2 text-right tabular-nums text-muted-foreground">
                         {s.available.toLocaleString("de-DE")}
                       </td>
@@ -498,6 +482,16 @@ function StellenPage() {
                 </tfoot>
               </table>
             </div>
+            {problemSources.length > 0 ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-xs text-muted-foreground">
+                  {problemSources.length} Quelle(n) ohne Treffer oder mit Fehler ausgeblendet.
+                </p>
+                <Button type="button" variant="outline" size="sm" onClick={() => setFixOpen(true)}>
+                  <Wrench className="mr-2 size-4" /> Fehlerbehebung
+                </Button>
+              </div>
+            ) : null}
           </div>
           ) : (
             <p className="text-sm text-muted-foreground">
