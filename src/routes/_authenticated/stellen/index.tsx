@@ -363,19 +363,9 @@ function StellenPage() {
                       >
                         {score}
                       </div>
-                      {match?.outlook && (
-                        <span className="max-w-[6.5rem] text-center text-[10px] leading-tight text-muted-foreground">
-                          {match.outlook}
-                        </span>
-                      )}
                     </div>
                   )}
                 </div>
-                {match?.summary && (
-                  <p className="line-clamp-2 rounded-md bg-muted/50 p-2 text-xs text-muted-foreground">
-                    {match.summary}
-                  </p>
-                )}
                 <p className="line-clamp-3 text-xs text-muted-foreground">{job.description}</p>
                 <div className="mt-auto flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <StatusBadge status={job.status} />
