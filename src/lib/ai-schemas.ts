@@ -2,10 +2,10 @@ import { z } from "zod";
 
 // Modelle liefern gelegentlich fehlende oder null-Felder. Tolerante Primitive
 // verhindern, dass die gesamte KI-Antwort verworfen wird.
-const str = () => z.string().nullish().transform((v) => v ?? "").catch("");
-const num = () => z.coerce.number().nullish().transform((v) => v ?? 0).catch(0);
+const str = () => z.string().nullish().transform((v) => v ?? "");
+const num = () => z.coerce.number().nullish().transform((v) => v ?? 0);
 const list = <T extends z.ZodTypeAny>(item: T) =>
-  z.array(item).nullish().transform((v) => v ?? []).catch([] as z.infer<T>[]);
+  z.array(item).nullish().transform((v) => v ?? []);
 
 export const GUARDRAIL =
   "Du bist ein Karriere- und Bewerbungsexperte für erfahrene Fach- und Führungskräfte im deutschsprachigen Raum. " +
