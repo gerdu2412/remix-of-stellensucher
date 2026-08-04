@@ -1,5 +1,12 @@
 import { z } from "zod";
 
+// Modelle liefern gelegentlich fehlende oder null-Felder. Tolerante Primitive
+// verhindern, dass die gesamte KI-Antwort verworfen wird.
+const str = () => z.string().nullish().transform((v) => v ?? "").catch("");
+const num = () => z.coerce.number().nullish().transform((v) => v ?? 0).catch(0);
+const list = <T extends z.ZodTypeAny>(item: T) =>
+  list(item).nullish().transform((v) => v ?? []).catch([] as z.infer<T>[]);
+
 export const GUARDRAIL =
   "Du bist ein Karriere- und Bewerbungsexperte für erfahrene Fach- und Führungskräfte im deutschsprachigen Raum. " +
   "Antworte ausschließlich auf Deutsch, sachlich, präzise und ohne Floskeln. " +
@@ -8,144 +15,144 @@ export const GUARDRAIL =
   "Wenn eine Information fehlt, kennzeichne sie ausdrücklich als Annahme oder Vorschlag.";
 
 export const cvSchema = z.object({
-  summary: z.string(),
-  experience: z.array(
+  summary: str(),
+  experience: list(
     z.object({
-      company: z.string(),
-      role: z.string(),
-      period: z.string(),
-      industry: z.string(),
-      achievements: z.array(z.string()),
+      company: str(),
+      role: str(),
+      period: str(),
+      industry: str(),
+      achievements: list(str()),
     }),
   ),
-  skills: z.array(z.string()),
-  methods: z.array(z.string()),
-  leadership: z.string(),
-  education: z.array(z.object({ degree: z.string(), institution: z.string(), year: z.string() })),
-  certificates: z.array(z.string()),
-  languages: z.array(z.object({ name: z.string(), level: z.string() })),
-  tools: z.array(z.string()),
-  career_level: z.string(),
-  target_roles: z.array(z.string()),
-  alternative_titles: z.array(z.string()),
+  skills: list(str()),
+  methods: list(str()),
+  leadership: str(),
+  education: list(z.object({ degree: str(), institution: str(), year: str() })),
+  certificates: list(str()),
+  languages: list(z.object({ name: str(), level: str() })),
+  tools: list(str()),
+  career_level: str(),
+  target_roles: list(str()),
+  alternative_titles: list(str()),
 });
 
 export const matchSchema = z.object({
-  overall_score: z.number(),
-  summary: z.string(),
-  outlook: z.string(),
-  category_scores: z.array(z.object({ label: z.string(), score: z.number() })),
-  fulfilled_requirements: z.array(z.string()),
-  partial_requirements: z.array(z.string()),
-  missing_requirements: z.array(z.string()),
-  transferable_skills: z.array(z.string()),
-  risks: z.array(z.string()),
-  differentiators: z.array(z.string()),
-  cv_recommendations: z.array(
+  overall_score: num(),
+  summary: str(),
+  outlook: str(),
+  category_scores: list(z.object({ label: str(), score: num() })),
+  fulfilled_requirements: list(str()),
+  partial_requirements: list(str()),
+  missing_requirements: list(str()),
+  transferable_skills: list(str()),
+  risks: list(str()),
+  differentiators: list(str()),
+  cv_recommendations: list(
     z.object({
-      area: z.string(),
-      current: z.string(),
-      suggestion: z.string(),
-      reason: z.string(),
-      relevance: z.string(),
+      area: str(),
+      current: str(),
+      suggestion: str(),
+      reason: str(),
+      relevance: str(),
     }),
   ),
 });
 
 export const strategySchema = z.object({
-  positioning: z.string(),
-  core_message: z.string(),
-  motivation_company: z.string(),
-  motivation_role: z.string(),
-  arguments: z.array(z.string()),
-  objections: z.array(z.object({ objection: z.string(), counter: z.string() })),
-  keywords: z.array(z.string()),
-  tone: z.string(),
-  story_one_liner: z.string(),
-  story_elevator: z.string(),
-  story_long: z.string(),
+  positioning: str(),
+  core_message: str(),
+  motivation_company: str(),
+  motivation_role: str(),
+  arguments: list(str()),
+  objections: list(z.object({ objection: str(), counter: str() })),
+  keywords: list(str()),
+  tone: str(),
+  story_one_liner: str(),
+  story_elevator: str(),
+  story_long: str(),
 });
 
 export const coverLetterSchema = z.object({
-  salutation: z.string(),
-  paragraphs: z.array(z.object({ id: z.string(), label: z.string(), text: z.string() })),
-  closing: z.string(),
+  salutation: str(),
+  paragraphs: list(z.object({ id: str(), label: str(), text: str() })),
+  closing: str(),
 });
 
 export const companySchema = z.object({
   dossier: z.object({
-    profile: z.string(),
-    business_model: z.string(),
-    market: z.string(),
-    competitors: z.string(),
-    strategy: z.string(),
-    transformation: z.string(),
-    ai: z.string(),
-    news: z.string(),
-    leadership: z.string(),
-    culture: z.string(),
-    ratings: z.string(),
-    opportunities: z.string(),
-    risks: z.string(),
-    role_challenges: z.string(),
+    profile: str(),
+    business_model: str(),
+    market: str(),
+    competitors: str(),
+    strategy: str(),
+    transformation: str(),
+    ai: str(),
+    news: str(),
+    leadership: str(),
+    culture: str(),
+    ratings: str(),
+    opportunities: str(),
+    risks: str(),
+    role_challenges: str(),
   }),
-  assumptions: z.array(z.string()),
-  open_questions: z.array(z.string()),
+  assumptions: list(str()),
+  open_questions: list(str()),
 });
 
 export const questionsSchema = z.object({
   briefing: z.object({
-    company_summary: z.string(),
-    role_requirements: z.array(z.string()),
-    challenges: z.array(z.string()),
-    strengths: z.array(z.string()),
-    weak_points: z.array(z.string()),
-    counterparts: z.array(z.string()),
-    interests: z.array(z.string()),
+    company_summary: str(),
+    role_requirements: list(str()),
+    challenges: list(str()),
+    strengths: list(str()),
+    weak_points: list(str()),
+    counterparts: list(str()),
+    interests: list(str()),
   }),
-  questions: z.array(
+  questions: list(
     z.object({
-      question: z.string(),
-      category: z.string(),
-      probability: z.string(),
-      difficulty: z.string(),
-      goal: z.string(),
-      structure: z.string(),
-      answer: z.string(),
-      follow_up: z.string(),
+      question: str(),
+      category: str(),
+      probability: str(),
+      difficulty: str(),
+      goal: str(),
+      structure: str(),
+      answer: str(),
+      follow_up: str(),
     }),
   ),
-  reverse_questions: z.array(
+  reverse_questions: list(
     z.object({
-      audience: z.string(),
-      question: z.string(),
-      impact: z.string(),
-      insight: z.string(),
-      risk: z.string(),
-      phase: z.string(),
+      audience: str(),
+      question: str(),
+      impact: str(),
+      insight: str(),
+      risk: str(),
+      phase: str(),
     }),
   ),
 });
 
 export const starSchema = z.object({
-  title: z.string(),
-  situation: z.string(),
-  task: z.string(),
-  action: z.string(),
-  result: z.string(),
-  learning: z.string(),
-  relevance: z.string(),
+  title: str(),
+  situation: str(),
+  task: str(),
+  action: str(),
+  result: str(),
+  learning: str(),
+  relevance: str(),
 });
 
 export const jobSchema = z.object({
-  title: z.string(),
-  company: z.string(),
-  location: z.string(),
-  country: z.string(),
-  region: z.string(),
-  remote_share: z.string(),
-  seniority: z.string(),
-  salary_range: z.string(),
-  contact_person: z.string(),
-  description: z.string(),
+  title: str(),
+  company: str(),
+  location: str(),
+  country: str(),
+  region: str(),
+  remote_share: str(),
+  seniority: str(),
+  salary_range: str(),
+  contact_person: str(),
+  description: str(),
 });
