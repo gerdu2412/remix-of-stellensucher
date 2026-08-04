@@ -181,12 +181,31 @@ export async function crawlJobRoom(role: string): Promise<CrawlResult> {
   return { source: "Job-Room (CH/LI)", url: `https://www.job-room.ch/job-search?query=${encodeURIComponent(role)}`, available: total || jobs.length, jobs };
 }
 
-/** Moovijob Luxemburg – JSON-LD Trefferliste. */
+/** Moovijob Luxemburg – Trefferliste der Suchseite. */
 export async function crawlMoovijob(role: string): Promise<CrawlResult> {
-  const url = `https://www.moovijob.com/de/jobs?query=${encodeURIComponent(role)}`;
+  const url = `https://www.moovijob.com/recherche?q=${encodeURIComponent(role)}`;
   const html = await getHtml(url);
-  const jobs = jsonLdJobs(html)
-    .map((j) => fromJsonLd(j, "Luxemburg"))
-    .filter((j): j is CrawledJob => Boolean(j));
+  const jobs: CrawledJob[] = [];
+  const seen = new Set<string>();
+  const cards = html.matchAll(
+    /<a\s+href="(https:\/\/www\.moovijob\.com\/offres-emploi\/[^"]+\/[^"?]+)"[\s\S]{0,1600}?card-job-offer-new-title[^>]*>([\s\S]*?)<\/p>[\s\S]{0,400}?company-name[^>]*>([\s\S]*?)<\/p>/g,
+  );
+  for (const card of cards) {
+    const href = card[1]!;
+    if (seen.has(href)) continue;
+    seen.add(href);
+    const title = stripHtml(card[2] ?? "");
+    if (!title) continue;
+    jobs.push({
+      id: href,
+      title,
+      company: stripHtml(card[3] ?? "") || "Unbekannt",
+      location: "Luxemburg",
+      country: "Luxemburg",
+      publication_date: null,
+      url: href,
+      description: "",
+    });
+  }
   return { source: "Moovijob (LU)", url, available: jobs.length, jobs };
 }
