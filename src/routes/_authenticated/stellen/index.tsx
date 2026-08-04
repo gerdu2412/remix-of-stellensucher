@@ -27,6 +27,7 @@ import {
 } from "@/components/shared/ui-bits";
 import { aiStructureJob } from "@/lib/ai.functions";
 import { searchJobFeeds } from "@/lib/jobsearch.functions";
+import { companyCareersUrl, companyWebsiteUrl, portalSearchLinks } from "@/lib/joblinks";
 import { useInsertRow, useJobs, useMatches, useSearchProfile } from "@/lib/queries";
 
 type FeedRun = Awaited<ReturnType<typeof searchJobFeeds>>;
@@ -66,6 +67,17 @@ function StellenPage() {
     const text = `${j.title} ${j.company} ${j.location ?? ""}`.toLowerCase();
     return matchesStatus && text.includes(query.toLowerCase());
   });
+
+  const profileRoles = searchProfile.data?.target_roles?.length
+    ? searchProfile.data.target_roles
+    : ["Projektmanager", "Transformationsmanager"];
+  const profileLocations = searchProfile.data?.regions?.length ? searchProfile.data.regions : [""];
+  const portals =
+    run?.portals ??
+    profileRoles
+      .slice(0, 2)
+      .flatMap((role) => profileLocations.slice(0, 2).flatMap((loc) => portalSearchLinks(role, loc)))
+      .filter((link, i, all) => all.findIndex((o) => o.url === link.url) === i);
 
   async function importJob() {
     if (raw.trim().length < 30) {
@@ -252,6 +264,26 @@ function StellenPage() {
             Sie hier je Quelle, wie viele Anzeigen geprüft wurden und wie viele davon zu Ihrem Profil passen.
           </p>
         )}
+
+        <div className="mt-5 border-t border-border pt-4">
+          <SectionTitle hint="Direktsuche in den grossen Stellenboersen und auf Firmen-Karriereseiten mit Ihren Zielrollen und Regionen.">
+            Weitere Quellen
+          </SectionTitle>
+          <div className="flex flex-wrap gap-2">
+            {portals.map((p) => (
+              <a
+                key={p.url}
+                href={p.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1 text-xs hover:bg-muted"
+              >
+                {p.name}: {p.query}
+                {p.location ? ` · ${p.location}` : ""} <ExternalLink className="size-3" />
+              </a>
+            ))}
+          </div>
+        </div>
       </Panel>
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row">
@@ -308,6 +340,38 @@ function StellenPage() {
                   <StatusBadge status={job.status} />
                   <span>{job.location ?? "Ort offen"}</span>
                   {job.remote_share && <span>· {job.remote_share}</span>}
+                </div>
+                <div
+                  className="flex flex-wrap items-center gap-3 text-xs"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  {job.original_url && (
+                    <a
+                      href={job.original_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1 hover:underline"
+                    >
+                      Stellenanzeige <ExternalLink className="size-3" />
+                    </a>
+                  )}
+                  <a
+                    href={companyWebsiteUrl(job.company)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 hover:underline"
+                  >
+                    Firmenwebseite <ExternalLink className="size-3" />
+                  </a>
+                  <a
+                    href={companyCareersUrl(job.company)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 hover:underline"
+                  >
+                    Karriereseite <ExternalLink className="size-3" />
+                  </a>
+                  {job.source && <span className="text-muted-foreground">Quelle: {job.source}</span>}
                 </div>
               </Link>
             );

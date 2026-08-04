@@ -1,3 +1,5 @@
+import { companyCareersUrl, companyWebsiteUrl, portalSearchLinks, type PortalLink } from "./joblinks";
+
 const BASE = "https://rest.arbeitsagentur.de/jobboerse/jobsuche-service";
 const API_KEY = "jobboerse-jobsuche";
 
@@ -26,12 +28,15 @@ export type FoundJob = {
   url: string;
   description: string;
   source: string;
+  company_url: string;
+  company_careers_url: string;
   score: number;
   reasons: string[];
 };
 
 export type FeedSearchResult = {
   sources: FeedSourceStat[];
+  portals: PortalLink[];
   jobs: FoundJob[];
   scanned: number;
   matched: number;
@@ -153,6 +158,8 @@ export async function searchFeeds(input: {
           url: jobUrl(refnr),
           description: "",
           source: FEED_SOURCE,
+          company_url: companyWebsiteUrl(company),
+          company_careers_url: companyCareersUrl(company),
           score,
           reasons: hits,
         });
@@ -189,6 +196,12 @@ export async function searchFeeds(input: {
 
   return {
     sources,
+    portals: combos
+      .slice(0, 8)
+      .flatMap((c) => portalSearchLinks(c.query, c.location))
+      .filter(
+        (link, index, all) => all.findIndex((other) => other.url === link.url) === index,
+      ),
     jobs,
     scanned: sources.reduce((sum, s) => sum + s.scanned, 0),
     matched: jobs.length,

@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, ExternalLink, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +36,7 @@ import {
   useUpdateRow,
   useUpsertRow,
 } from "@/lib/queries";
+import { companyCareersUrl, companyWebsiteUrl } from "@/lib/joblinks";
 
 export const Route = createFileRoute("/_authenticated/stellen/$jobId")({
   head: () => ({
@@ -149,6 +150,36 @@ function JobDetail() {
           </Select>
         }
       />
+
+      <div className="mb-4 flex flex-wrap items-center gap-3 text-sm">
+        {job.data.original_url && (
+          <a
+            href={job.data.original_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 hover:underline"
+          >
+            Stellenanzeige öffnen <ExternalLink className="size-3.5" />
+          </a>
+        )}
+        <a
+          href={companyWebsiteUrl(job.data.company)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 hover:underline"
+        >
+          Firmenwebseite <ExternalLink className="size-3.5" />
+        </a>
+        <a
+          href={companyCareersUrl(job.data.company)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 hover:underline"
+        >
+          Karriereseite <ExternalLink className="size-3.5" />
+        </a>
+        {job.data.source && <span className="text-muted-foreground">Quelle: {job.data.source}</span>}
+      </div>
 
       <Tabs defaultValue="match">
         <TabsList className="flex-wrap">
