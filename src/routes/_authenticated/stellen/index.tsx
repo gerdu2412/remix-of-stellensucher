@@ -51,6 +51,21 @@ const DEFAULT_TERMS = [
   "Business Consulting",
 ];
 
+const ANY_REGION = "Egal (überall)";
+const DEFAULT_REGIONS = [
+  ANY_REGION,
+  "Rheinland-Pfalz",
+  "Hessen",
+  "Bayern",
+  "Baden-Württemberg",
+  "Nordrhein-Westfalen",
+  "Österreich",
+  "Schweiz",
+  "Luxemburg",
+  "Remote",
+];
+const PRIORITY_REGIONS = [ANY_REGION, "Rheinland-Pfalz", "Hessen", "Bayern"];
+
 export const Route = createFileRoute("/_authenticated/stellen/")({
   head: () => ({
     meta: [
@@ -78,6 +93,9 @@ function StellenPage() {
   const [customTerms, setCustomTerms] = useState<string[]>([]);
   const [newTerm, setNewTerm] = useState("");
   const [activeTerms, setActiveTerms] = useState<string[]>(DEFAULT_TERMS);
+  const [customRegions, setCustomRegions] = useState<string[]>([]);
+  const [newRegion, setNewRegion] = useState("");
+  const [activeRegions, setActiveRegions] = useState<string[]>(PRIORITY_REGIONS);
 
   const matchByJob = useMemo(
     () => new Map((matches.data ?? []).map((m) => [m.job_posting_id, m])),
@@ -99,6 +117,28 @@ function StellenPage() {
   );
   const selectedTerms = activeTerms.filter((t) => allTerms.includes(t));
 
+  const allRegions = useMemo(
+    () => [...new Set([...DEFAULT_REGIONS, ...(searchProfile.data?.regions ?? []).filter(Boolean), ...customRegions])],
+    [searchProfile.data?.regions?.join("|"), customRegions],
+  );
+  const selectedRegions = activeRegions.filter((r) => allRegions.includes(r));
+  const searchLocations = useMemo(
+    () => [...new Set(selectedRegions.map((r) => (r === ANY_REGION ? "" : r)))],
+    [selectedRegions.join("|")],
+  );
+
+  function toggleRegion(region: string) {
+    setActiveRegions((prev) => (prev.includes(region) ? prev.filter((r) => r !== region) : [...prev, region]));
+  }
+
+  function addRegion() {
+    const value = newRegion.trim();
+    if (!value) return;
+    if (!allRegions.includes(value)) setCustomRegions((prev) => [...prev, value]);
+    setActiveRegions((prev) => (prev.includes(value) ? prev : [...prev, value]));
+    setNewRegion("");
+  }
+
   function toggleTerm(term: string) {
     setActiveTerms((prev) => (prev.includes(term) ? prev.filter((t) => t !== term) : [...prev, term]));
   }
@@ -110,7 +150,7 @@ function StellenPage() {
     setActiveTerms((prev) => (prev.includes(value) ? prev : [...prev, value]));
     setNewTerm("");
   }
-  const profileLocations = searchProfile.data?.regions?.length ? searchProfile.data.regions : [""];
+  const profileLocations = searchLocations.length ? searchLocations : [""];
   const portals =
     run?.portals ??
     profileRoles
@@ -157,7 +197,7 @@ function StellenPage() {
       const result = await searchJobFeeds({
         data: {
           roles,
-          locations: profile?.regions ?? [],
+          locations: searchLocations.length ? searchLocations : (profile?.regions ?? []),
           excluded: profile?.excluded_industries ?? [],
           perQuery: 25,
         },
@@ -243,7 +283,9 @@ function StellenPage() {
                   <p className="font-display text-sm font-semibold">Suchbegriffe und Regionen</p>
                   <p className="text-xs font-normal text-muted-foreground">
                     {selectedTerms.length} von {allTerms.length} Suchbegriffen aktiv ·{" "}
-                    {(searchProfile.data?.regions ?? []).length || "alle"} Regionen
+                    {selectedRegions.includes(ANY_REGION)
+                      ? `alle Regionen (Prio: ${selectedRegions.filter((r) => r !== ANY_REGION).join(", ") || "keine"})`
+                      : `${selectedRegions.length} Regionen`}
                   </p>
                 </div>
               </AccordionTrigger>
@@ -288,17 +330,41 @@ function StellenPage() {
                 </div>
                 <p className="mt-3 text-xs uppercase tracking-wide text-muted-foreground">Regionen</p>
                 <div className="mt-2 flex flex-wrap gap-2">
-                  {[
-                    ...new Set(
-                      run
-                        ? run.sources.map((s) => s.location).filter(Boolean)
-                        : (searchProfile.data?.regions ?? []).filter(Boolean),
-                    ),
-                  ].map((l) => (
-                    <span key={l} className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">
-                      {l}
-                    </span>
-                  ))}
+                  {allRegions.map((region) => {
+                    const active = selectedRegions.includes(region);
+                    return (
+                      <button
+                        key={region}
+                        type="button"
+                        onClick={() => toggleRegion(region)}
+                        className={
+                          "rounded-full border px-3 py-1 text-xs transition " +
+                          (active
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border text-muted-foreground hover:bg-muted")
+                        }
+                      >
+                        {region}
+                      </button>
+                    );
+                  })}
+                </div>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <Input
+                    value={newRegion}
+                    onChange={(e) => setNewRegion(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter") {
+                        e.preventDefault();
+                        addRegion();
+                      }
+                    }}
+                    placeholder="Eigene Region hinzufügen …"
+                    className="max-w-xs"
+                  />
+                  <Button type="button" variant="outline" onClick={addRegion}>
+                    <Plus className="mr-2 size-4" /> Hinzufügen
+                  </Button>
                 </div>
               </AccordionContent>
           </AccordionItem>
