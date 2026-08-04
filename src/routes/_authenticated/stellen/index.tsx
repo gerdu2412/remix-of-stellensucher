@@ -158,6 +158,24 @@ function StellenPage() {
       .filter((link, i, all) => all.findIndex((o) => o.url === link.url) === i);
   }, [selectedTerms.join("|"), searchLocations.join("|"), profileRoles.join("|")]);
 
+  const portalGroups = useMemo(() => {
+    const map = new Map<string, { name: string; url: string; links: number; terms: Set<string>; regions: Set<string> }>();
+    for (const p of portals) {
+      const entry = map.get(p.name) ?? { name: p.name, url: p.url, links: 0, terms: new Set<string>(), regions: new Set<string>() };
+      entry.links += 1;
+      if (p.query) entry.terms.add(p.query);
+      entry.regions.add(p.location || "überall");
+      map.set(p.name, entry);
+    }
+    return [...map.values()].map((e) => ({
+      name: e.name,
+      url: e.url,
+      links: e.links,
+      terms: e.terms.size,
+      regions: e.regions.size,
+    }));
+  }, [portals]);
+
   async function importJob() {
     if (raw.trim().length < 30) {
       toast.error("Bitte den Ausschreibungstext einfügen.");
