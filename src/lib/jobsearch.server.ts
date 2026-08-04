@@ -1,4 +1,11 @@
-import { companyCareersUrl, companyWebsiteUrl, portalSearchLinks, type PortalLink } from "./joblinks";
+import {
+  crawlJobRoom,
+  crawlJobsCh,
+  crawlMoovijob,
+  crawlStepstoneAt,
+  type CrawlResult,
+} from "./jobcrawler.server";
+import { companyCareersUrl, companyWebsiteUrl, portalSearchLinks, regionalPortalLinks, type PortalLink } from "./joblinks";
 
 const BASE = "https://rest.arbeitsagentur.de/jobboerse/jobsuche-service";
 const API_KEY = "jobboerse-jobsuche";
@@ -187,18 +194,94 @@ export async function searchFeeds(input: {
     }
   }
 
-  const jobs = [...found.values()].sort((a, b) => b.score - a.score).slice(0, 20);
-  await Promise.all(
-    jobs.slice(0, 12).map(async (job) => {
-      job.description = await fetchDescription(job.refnr);
+  // --- Crawler: Oesterreich, Schweiz, Liechtenstein, Luxemburg ---
+  const crawlerTargets: { label: string; location: string; run: () => Promise<CrawlResult> }[] = [];
+  for (const role of roles.length ? roles : ["Projektmanager"]) {
+    crawlerTargets.push({ label: "StepStone Österreich", location: "Österreich", run: () => crawlStepstoneAt(role, "") });
+    crawlerTargets.push({ label: "jobs.ch", location: "Schweiz", run: () => crawlJobsCh(role, "") });
+    crawlerTargets.push({ label: "Job-Room (CH/LI)", location: "Schweiz / Liechtenstein", run: () => crawlJobRoom(role) });
+    crawlerTargets.push({ label: "jobs.ch", location: "Liechtenstein", run: () => crawlJobsCh(role, "Liechtenstein") });
+    crawlerTargets.push({ label: "Moovijob (LU)", location: "Luxemburg", run: () => crawlMoovijob(role) });
+  }
+
+  const crawlerRuns = await Promise.all(
+    crawlerTargets.slice(0, 20).map(async (target, index) => {
+      const role = (roles.length ? roles : ["Projektmanager"])[Math.floor(index / 5)] ?? roles[0] ?? "Projektmanager";
+      try {
+        return { target, role, result: await target.run(), error: "" };
+      } catch (error) {
+        return { target, role, result: null, error: (error as Error).message };
+      }
     }),
+  );
+
+  for (const run of crawlerRuns) {
+    if (!run.result) {
+      sources.push({
+        source: run.target.label,
+        query: run.role,
+        location: run.target.location,
+        url: "",
+        scanned: 0,
+        available: 0,
+        matched: 0,
+        error: run.error,
+      });
+      continue;
+    }
+    let matched = 0;
+    for (const item of run.result.jobs) {
+      const haystack = `${item.title} ${item.company}`.toLowerCase();
+      if (excluded.some((term) => haystack.includes(term))) continue;
+      const hits = [...roleTokens].filter((t) => haystack.includes(t));
+      if (roleTokens.size > 0 && hits.length === 0) continue;
+      matched += 1;
+      if (found.has(item.url)) continue;
+      found.set(item.url, {
+        refnr: item.id,
+        title: item.title,
+        company: item.company,
+        location: item.location,
+        region: run.target.location,
+        country: item.country,
+        publication_date: item.publication_date,
+        salary_range: "",
+        url: item.url,
+        description: item.description,
+        source: run.result.source,
+        company_url: companyWebsiteUrl(item.company),
+        company_careers_url: companyCareersUrl(item.company),
+        score: Math.min(100, 40 + hits.length * 20),
+        reasons: hits,
+      });
+    }
+    sources.push({
+      source: run.result.source,
+      query: run.role,
+      location: run.target.location,
+      url: run.result.url,
+      scanned: run.result.jobs.length,
+      available: run.result.available,
+      matched,
+    });
+  }
+
+  const jobs = [...found.values()].sort((a, b) => b.score - a.score).slice(0, 40);
+  await Promise.all(
+    jobs
+      .filter((job) => job.source === FEED_SOURCE && !job.description)
+      .slice(0, 12)
+      .map(async (job) => {
+        job.description = await fetchDescription(job.refnr);
+      }),
   );
 
   return {
     sources,
-    portals: combos
-      .slice(0, 8)
-      .flatMap((c) => portalSearchLinks(c.query, c.location))
+    portals: [
+      ...combos.slice(0, 8).flatMap((c) => portalSearchLinks(c.query, c.location)),
+      ...(roles.length ? roles : ["Projektmanager"]).slice(0, 2).flatMap((role) => regionalPortalLinks(role)),
+    ]
       .filter(
         (link, index, all) => all.findIndex((other) => other.url === link.url) === index,
       ),

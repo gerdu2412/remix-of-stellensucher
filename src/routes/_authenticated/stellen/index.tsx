@@ -15,12 +15,12 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   EmptyState,
   PageHeader,
   Panel,
-  SectionTitle,
   STATUS_OPTIONS,
   StatusBadge,
   statusLabel,
@@ -195,95 +195,111 @@ function StellenPage() {
       />
 
       <Panel className="mb-4">
-        <SectionTitle
-          hint={
-            run
-              ? `Letzte Aktualisierung: ${new Date(run.ran_at).toLocaleString("de-DE")} · ${run.scanned} Anzeigen durchsucht · ${run.matched} passend · ${run.imported} neu übernommen`
-              : "Noch keine Aktualisierung in dieser Sitzung – Suche startet mit den Zielrollen und Regionen aus Ihrem Suchprofil."
-          }
-        >
-          Durchsuchte Quellen
-        </SectionTitle>
+        <Accordion type="multiple" defaultValue={["quellen"]}>
+          <AccordionItem value="quellen" className="border-0">
+            <AccordionTrigger className="py-1 hover:no-underline">
+              <div className="text-left">
+                <p className="font-display text-sm font-semibold">Durchsuchte Quellen</p>
+                <p className="text-xs font-normal text-muted-foreground">
+                  {run
+                    ? `Letzte Aktualisierung: ${new Date(run.ran_at).toLocaleString("de-DE")} · ${run.scanned} Anzeigen durchsucht · ${run.matched} passend · ${run.imported} neu übernommen`
+                    : "Noch keine Aktualisierung in dieser Sitzung – Suche startet mit den Zielrollen und Regionen aus Ihrem Suchprofil."}
+                </p>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pt-2">
         {run ? (
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[560px] text-sm">
-              <thead>
-                <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
-                  <th className="py-2 pr-3 font-medium">Quelle</th>
-                  <th className="py-2 pr-3 font-medium">Suchbegriff</th>
-                  <th className="py-2 pr-3 font-medium">Region</th>
-                  <th className="py-2 pr-3 text-right font-medium">Durchsucht</th>
-                  <th className="py-2 pr-3 text-right font-medium">Passend</th>
-                  <th className="py-2 text-right font-medium">Treffer gesamt</th>
-                </tr>
-              </thead>
-              <tbody>
-                {run.sources.map((s, i) => (
-                  <tr key={`${s.query}-${s.location}-${i}`} className="border-b border-border/60 last:border-0">
-                    <td className="py-2 pr-3">
-                      {s.url ? (
-                        <a
-                          href={s.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 hover:underline"
-                        >
-                          {s.source} <ExternalLink className="size-3" />
-                        </a>
-                      ) : (
-                        s.source
-                      )}
-                    </td>
-                    <td className="py-2 pr-3">{s.query}</td>
-                    <td className="py-2 pr-3 text-muted-foreground">{s.location}</td>
-                    <td className="py-2 pr-3 text-right tabular-nums">{s.scanned}</td>
-                    <td className="py-2 pr-3 text-right tabular-nums font-medium">
-                      {s.error ? <span className="text-destructive">Fehler</span> : s.matched}
-                    </td>
-                    <td className="py-2 text-right tabular-nums text-muted-foreground">
-                      {s.available.toLocaleString("de-DE")}
-                    </td>
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[560px] text-sm">
+                <thead>
+                  <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
+                    <th className="py-2 pr-3 font-medium">Quelle</th>
+                    <th className="py-2 pr-3 font-medium">Suchbegriff</th>
+                    <th className="py-2 pr-3 font-medium">Region</th>
+                    <th className="py-2 pr-3 text-right font-medium">Durchsucht</th>
+                    <th className="py-2 pr-3 text-right font-medium">Passend</th>
+                    <th className="py-2 text-right font-medium">Treffer gesamt</th>
                   </tr>
-                ))}
-              </tbody>
-              <tfoot>
-                <tr className="border-t border-border font-medium">
-                  <td className="py-2 pr-3" colSpan={3}>
-                    Gesamt
-                  </td>
-                  <td className="py-2 pr-3 text-right tabular-nums">{run.scanned}</td>
-                  <td className="py-2 pr-3 text-right tabular-nums">{run.matched}</td>
-                  <td className="py-2" />
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        ) : (
-          <p className="text-sm text-muted-foreground">
-            Klicken Sie auf „Neue Stellen suchen“, um die angebundenen Stellenportale zu durchsuchen. Anschließend sehen
-            Sie hier je Quelle, wie viele Anzeigen geprüft wurden und wie viele davon zu Ihrem Profil passen.
-          </p>
-        )}
+                </thead>
+                <tbody>
+                  {run.sources.map((s, i) => (
+                    <tr key={`${s.query}-${s.location}-${i}`} className="border-b border-border/60 last:border-0">
+                      <td className="py-2 pr-3">
+                        {s.url ? (
+                          <a
+                            href={s.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 hover:underline"
+                          >
+                            {s.source} <ExternalLink className="size-3" />
+                          </a>
+                        ) : (
+                          s.source
+                        )}
+                      </td>
+                      <td className="py-2 pr-3">{s.query}</td>
+                      <td className="py-2 pr-3 text-muted-foreground">{s.location}</td>
+                      <td className="py-2 pr-3 text-right tabular-nums">{s.scanned}</td>
+                      <td className="py-2 pr-3 text-right tabular-nums font-medium">
+                        {s.error ? <span className="text-destructive">Fehler</span> : s.matched}
+                      </td>
+                      <td className="py-2 text-right tabular-nums text-muted-foreground">
+                        {s.available.toLocaleString("de-DE")}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot>
+                  <tr className="border-t border-border font-medium">
+                    <td className="py-2 pr-3" colSpan={3}>
+                      Gesamt
+                    </td>
+                    <td className="py-2 pr-3 text-right tabular-nums">{run.scanned}</td>
+                    <td className="py-2 pr-3 text-right tabular-nums">{run.matched}</td>
+                    <td className="py-2" />
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          ) : (
+            <p className="text-sm text-muted-foreground">
+              Klicken Sie auf „Neue Stellen suchen“, um die angebundenen Stellenportale zu durchsuchen. Anschließend sehen
+              Sie hier je Quelle, wie viele Anzeigen geprüft wurden und wie viele davon zu Ihrem Profil passen.
+            </p>
+          )}
+  
+  
+            </AccordionContent>
+          </AccordionItem>
 
-        <div className="mt-5 border-t border-border pt-4">
-          <SectionTitle hint="Direktsuche in den grossen Stellenboersen und auf Firmen-Karriereseiten mit Ihren Zielrollen und Regionen.">
-            Weitere Quellen
-          </SectionTitle>
-          <div className="flex flex-wrap gap-2">
-            {portals.map((p) => (
-              <a
-                key={p.url}
-                href={p.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1 text-xs hover:bg-muted"
-              >
-                {p.name}: {p.query}
-                {p.location ? ` · ${p.location}` : ""} <ExternalLink className="size-3" />
-              </a>
-            ))}
-          </div>
-        </div>
+          <AccordionItem value="weitere" className="border-0 border-t border-border">
+            <AccordionTrigger className="py-3 hover:no-underline">
+              <div className="text-left">
+                <p className="font-display text-sm font-semibold">Weitere Quellen (DE, AT, CH, LI, LU)</p>
+                <p className="text-xs font-normal text-muted-foreground">
+                  Direktsuche in den grossen Stellenboersen und auf Firmen-Karriereseiten mit Ihren Zielrollen und Regionen.
+                </p>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent>
+              <div className="flex flex-wrap gap-2">
+                {portals.map((p) => (
+                  <a
+                    key={p.url}
+                    href={p.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1 text-xs hover:bg-muted"
+                  >
+                    {p.name}: {p.query}
+                    {p.location ? ` · ${p.location}` : ""} <ExternalLink className="size-3" />
+                  </a>
+                ))}
+              </div>
+            </AccordionContent>
+          </AccordionItem>
+        </Accordion>
       </Panel>
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row">
