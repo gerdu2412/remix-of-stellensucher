@@ -570,7 +570,7 @@ function StellenPage() {
                   </thead>
                   <tbody>
                     {portalGroups.map((g) => {
-                      const stats = statsByName.get(g.name.toLowerCase());
+                      const stats = statsFor(g.name);
                       return (
                       <tr key={g.name} className="border-b border-border/60 last:border-0">
                         <td className="py-2 pr-3">
