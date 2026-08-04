@@ -120,3 +120,74 @@ export async function searchCareerjet(role: string, market: keyof typeof CAREERJ
     }));
   return { source: `Careerjet (${cfg.country})`, url: publicUrl, available: data.hits ?? jobs.length, jobs };
 }
+
+/** TheirStack – Job-Datenbank mit Firmen-/Tech-Signalen (API-Key noetig). */
+export async function searchTheirStack(role: string, countries: string[]): Promise<CrawlResult> {
+  const key = process.env["THEIRSTACK_API_KEY"];
+  const publicUrl = `https://theirstack.com/en/jobs?q=${enc(role)}`;
+  if (!key) throw new MissingKeyError("TheirStack-API-Schlüssel fehlt (THEIRSTACK_API_KEY)");
+  const res = await fetch("https://api.theirstack.com/v1/jobs/search", {
+    method: "POST",
+    headers: { authorization: `Bearer ${key}`, "content-type": "application/json", accept: "application/json" },
+    body: JSON.stringify({
+      page: 0,
+      limit: 25,
+      job_title_or: [role],
+      job_country_code_or: countries,
+      posted_at_max_age_days: 30,
+    }),
+  });
+  if (!res.ok) throw new Error(`Antwort ${res.status}: ${(await res.text()).slice(0, 200)}`);
+  const data = (await res.json()) as { metadata?: { total_results?: number }; data?: any[] };
+  const jobs: CrawledJob[] = (data.data ?? [])
+    .filter((j) => j?.url && j?.job_title)
+    .map((j) => ({
+      id: String(j.id ?? j.url),
+      title: stripTags(String(j.job_title)),
+      company: j.company_object?.name ?? j.company ?? "Unbekannt",
+      location: j.location ?? j.short_location ?? "",
+      country: j.country ?? "",
+      publication_date: typeof j.date_posted === "string" ? j.date_posted : null,
+      url: String(j.final_url ?? j.url),
+      description: stripTags(String(j.description ?? "")).slice(0, 12000),
+    }));
+  return { source: "TheirStack", url: publicUrl, available: data.metadata?.total_results ?? jobs.length, jobs };
+}
+
+/** Techmap – taegliche internationale Stellenanzeigen (RapidAPI-Key noetig). */
+export async function searchTechmap(role: string, countryCode: string): Promise<CrawlResult> {
+  const key = process.env["TECHMAP_RAPIDAPI_KEY"];
+  const publicUrl = `https://techmap.io/`;
+  if (!key) throw new MissingKeyError("Techmap-API-Schlüssel fehlt (TECHMAP_RAPIDAPI_KEY)");
+  const params = new URLSearchParams({
+    title: role,
+    countryCode,
+    dateCreated: new Date(Date.now() - 14 * 864e5).toISOString().slice(0, 10),
+    limit: "25",
+  });
+  const res = await fetch(`https://daily-international-job-postings.p.rapidapi.com/api/v2/jobs/search?${params.toString()}`, {
+    headers: {
+      "x-rapidapi-key": key,
+      "x-rapidapi-host": "daily-international-job-postings.p.rapidapi.com",
+      accept: "application/json",
+    },
+  });
+  if (!res.ok) throw new Error(`Antwort ${res.status}`);
+  const data = (await res.json()) as { totalCount?: number; result?: any[] };
+  const jobs: CrawledJob[] = (data.result ?? [])
+    .filter((j) => (j?.json?.url || j?.url) && (j?.json?.title || j?.title))
+    .map((j) => {
+      const src = j.json ?? j;
+      return {
+        id: String(src.id ?? src.url),
+        title: stripTags(String(src.title)),
+        company: src.hiringOrganization?.name ?? src.company ?? "Unbekannt",
+        location: src.jobLocation?.address?.addressLocality ?? src.city ?? "",
+        country: src.jobLocation?.address?.addressCountry ?? countryCode,
+        publication_date: typeof src.datePosted === "string" ? src.datePosted : null,
+        url: String(src.url),
+        description: stripTags(String(src.description ?? "")).slice(0, 12000),
+      };
+    });
+  return { source: `Techmap (${countryCode})`, url: publicUrl, available: data.totalCount ?? jobs.length, jobs };
+}

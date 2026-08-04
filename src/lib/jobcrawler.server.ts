@@ -213,3 +213,43 @@ export async function crawlMoovijob(role: string): Promise<CrawlResult> {
   }
   return { source: "Moovijob (LU)", url, available: jobs.length, jobs };
 }
+
+/** Nomado24 – deutscher Remote-Job-Aggregator (serverseitig gerenderte Trefferliste). */
+export async function crawlNomado24(role: string): Promise<CrawlResult> {
+  const url = `https://www.nomado24.de/de/remote-jobs/alle?query=${encodeURIComponent(role)}`;
+  const html = await getHtml(url);
+  const jobs: CrawledJob[] = [];
+  const seen = new Set<string>();
+  const cards = html.matchAll(
+    /<a[^>]+href="(\/de\/remote-jobs\/job\/[^"]+)"[^>]*>([\s\S]*?)<\/a>\s*<span[^>]*>([\s\S]*?)<\/span>/g,
+  );
+  for (const card of cards) {
+    const href = `https://www.nomado24.de${card[1]}`;
+    if (seen.has(href)) continue;
+    seen.add(href);
+    const title = stripHtml(card[2] ?? "");
+    if (!title) continue;
+    const meta = stripHtml(card[3] ?? "").split("·");
+    jobs.push({
+      id: href,
+      title,
+      company: (meta[0] ?? "").trim() || "Unbekannt",
+      location: (meta[1] ?? "").trim() || "Remote",
+      country: "Deutschland",
+      publication_date: null,
+      url: href,
+      description: "",
+    });
+  }
+  return { source: "Nomado24", url, available: jobs.length, jobs };
+}
+
+/** metajob.de – Meta-Suchmaschine (blockt Bots haeufig, daher tolerant). */
+export async function crawlMetajob(role: string, location: string): Promise<CrawlResult> {
+  const url = `https://www.metajob.de/${encodeURIComponent(role)}${location ? `/in-${encodeURIComponent(location)}` : ""}`;
+  const html = await getHtml(url);
+  const jobs = jsonLdJobs(html)
+    .map((j) => fromJsonLd(j, "Deutschland"))
+    .filter((j): j is CrawledJob => Boolean(j));
+  return { source: "metajob.de", url, available: jobs.length, jobs };
+}

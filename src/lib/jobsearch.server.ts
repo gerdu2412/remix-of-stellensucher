@@ -1,12 +1,14 @@
 import {
   crawlJobRoom,
   crawlJobsCh,
+  crawlMetajob,
   crawlMoovijob,
+  crawlNomado24,
   crawlStepstoneAt,
   type CrawlResult,
 } from "./jobcrawler.server";
 import { companyCareersUrl, companyWebsiteUrl, portalSearchLinks, regionalPortalLinks, type PortalLink } from "./joblinks";
-import { searchAdzuna, searchCareerjet, searchJooble } from "./jobaggregators.server";
+import { searchAdzuna, searchCareerjet, searchJooble, searchTechmap, searchTheirStack } from "./jobaggregators.server";
 
 const BASE = "https://rest.arbeitsagentur.de/jobboerse/jobsuche-service";
 const API_KEY = "jobboerse-jobsuche";
@@ -195,18 +197,22 @@ export async function searchFeeds(input: {
     }
   }
 
-  // --- Crawler: Oesterreich, Schweiz, Liechtenstein, Luxemburg ---
-  const crawlerTargets: { label: string; location: string; run: () => Promise<CrawlResult> }[] = [];
-  for (const role of roles.length ? roles : ["Projektmanager"]) {
-    crawlerTargets.push({ label: "StepStone Österreich", location: "Österreich", run: () => crawlStepstoneAt(role, "") });
-    crawlerTargets.push({ label: "jobs.ch", location: "Schweiz", run: () => crawlJobsCh(role, "") });
-    crawlerTargets.push({ label: "Job-Room (CH/LI)", location: "Schweiz / Liechtenstein", run: () => crawlJobRoom(role) });
-    crawlerTargets.push({ label: "jobs.ch", location: "Liechtenstein", run: () => crawlJobsCh(role, "Liechtenstein") });
-    crawlerTargets.push({ label: "Moovijob (LU)", location: "Luxemburg", run: () => crawlMoovijob(role) });
+  const primaryLocation = locations[0] ?? "";
+  const activeRoles = roles.length ? roles : ["Projektmanager"];
+
+  // --- Crawler: DACH, Liechtenstein, Luxemburg, Meta-Portale ---
+  const crawlerTargets: { label: string; location: string; role: string; run: () => Promise<CrawlResult> }[] = [];
+  for (const role of activeRoles) {
+    crawlerTargets.push({ label: "StepStone Österreich", location: "Österreich", role, run: () => crawlStepstoneAt(role, "") });
+    crawlerTargets.push({ label: "jobs.ch", location: "Schweiz", role, run: () => crawlJobsCh(role, "") });
+    crawlerTargets.push({ label: "Job-Room (CH/LI)", location: "Schweiz / Liechtenstein", role, run: () => crawlJobRoom(role) });
+    crawlerTargets.push({ label: "jobs.ch", location: "Liechtenstein", role, run: () => crawlJobsCh(role, "Liechtenstein") });
+    crawlerTargets.push({ label: "Moovijob (LU)", location: "Luxemburg", role, run: () => crawlMoovijob(role) });
+    crawlerTargets.push({ label: "Nomado24", location: "Remote / Deutschland", role, run: () => crawlNomado24(role) });
+    crawlerTargets.push({ label: "metajob.de", location: primaryLocation || "Deutschland", role, run: () => crawlMetajob(role, primaryLocation) });
   }
 
-  // --- Job-Aggregatoren (Adzuna, Jooble, Careerjet) ---
-  const primaryLocation = locations[0] ?? "";
+  // --- Job-Aggregatoren (Adzuna, Jooble, Careerjet, TheirStack, Techmap) ---
   const aggregatorTargets: { label: string; location: string; role: string; run: () => Promise<CrawlResult> }[] = [];
   for (const role of roles.length ? roles : ["Projektmanager"]) {
     aggregatorTargets.push({ label: "Adzuna (Deutschland)", location: primaryLocation || "Deutschland", role, run: () => searchAdzuna(role, "de", primaryLocation) });
@@ -217,15 +223,16 @@ export async function searchFeeds(input: {
     aggregatorTargets.push({ label: "Careerjet (Österreich)", location: "Österreich", role, run: () => searchCareerjet(role, "at", "") });
     aggregatorTargets.push({ label: "Careerjet (Schweiz)", location: "Schweiz", role, run: () => searchCareerjet(role, "ch", "") });
     aggregatorTargets.push({ label: "Careerjet (Luxemburg)", location: "Luxemburg", role, run: () => searchCareerjet(role, "lu", "") });
+    aggregatorTargets.push({ label: "TheirStack", location: "DACH / LU / LI", role, run: () => searchTheirStack(role, ["DE", "AT", "CH", "LU", "LI"]) });
+    aggregatorTargets.push({ label: "Techmap (DE)", location: "Deutschland", role, run: () => searchTechmap(role, "de") });
+    aggregatorTargets.push({ label: "Techmap (AT)", location: "Österreich", role, run: () => searchTechmap(role, "at") });
+    aggregatorTargets.push({ label: "Techmap (CH)", location: "Schweiz", role, run: () => searchTechmap(role, "ch") });
   }
 
   const crawlerRuns = await Promise.all(
     [
-      ...crawlerTargets.slice(0, 20).map((target, index) => ({
-        target,
-        role: (roles.length ? roles : ["Projektmanager"])[Math.floor(index / 5)] ?? roles[0] ?? "Projektmanager",
-      })),
-      ...aggregatorTargets.slice(0, 32).map((target) => ({ target, role: target.role })),
+      ...crawlerTargets.slice(0, 28).map((target) => ({ target, role: target.role })),
+      ...aggregatorTargets.slice(0, 48).map((target) => ({ target, role: target.role })),
     ].map(async ({ target, role }) => {
       try {
         return { target, role, result: await target.run(), error: "" };
