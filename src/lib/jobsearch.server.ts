@@ -1,4 +1,9 @@
 import {
+  browserCrawlersEnabled,
+  crawlIndeed,
+  crawlLinkedIn,
+  crawlStepstoneDe,
+  crawlXing,
   crawlJobRoom,
   crawlJobsCh,
   crawlMetajob,
@@ -8,6 +13,7 @@ import {
   type CrawlResult,
 } from "./jobcrawler.server";
 import { companyCareersUrl, companyWebsiteUrl, portalSearchLinks, regionalPortalLinks, type PortalLink } from "./joblinks";
+import { renderProviderLabel } from "./browserfetch.server";
 import { searchAdzuna, searchCareerjet, searchJooble, searchTechmap, searchTheirStack } from "./jobaggregators.server";
 
 const BASE = "https://rest.arbeitsagentur.de/jobboerse/jobsuche-service";
@@ -212,6 +218,28 @@ export async function searchFeeds(input: {
     crawlerTargets.push({ label: "metajob.de", location: primaryLocation || "Deutschland", role, run: () => crawlMetajob(role, primaryLocation) });
   }
 
+  // --- Gehosteter Browser (Playwright-Rendering) fuer JS-lastige Portale ---
+  if (browserCrawlersEnabled()) {
+    for (const role of activeRoles) {
+      crawlerTargets.push({ label: "LinkedIn Jobs", location: primaryLocation || "Deutschland", role, run: () => crawlLinkedIn(role, primaryLocation) });
+      crawlerTargets.push({ label: "Indeed", location: primaryLocation || "Deutschland", role, run: () => crawlIndeed(role, primaryLocation) });
+      crawlerTargets.push({ label: "StepStone Deutschland", location: primaryLocation || "Deutschland", role, run: () => crawlStepstoneDe(role, primaryLocation) });
+      crawlerTargets.push({ label: "Xing Jobs", location: primaryLocation || "Deutschland", role, run: () => crawlXing(role, primaryLocation) });
+    }
+  } else {
+    sources.push({
+      source: `Browser-Rendering (${renderProviderLabel()})`,
+      query: activeRoles[0] ?? "",
+      location: primaryLocation || "Deutschland",
+      url: "",
+      scanned: 0,
+      available: 0,
+      matched: 0,
+      error:
+        "Kein Browser-Dienst hinterlegt – LinkedIn, Indeed, StepStone DE und Xing werden übersprungen. API-Key für Browserless, ScrapingBee oder Bright Data hinterlegen.",
+    });
+  }
+
   // --- Job-Aggregatoren (Adzuna, Jooble, Careerjet, TheirStack, Techmap) ---
   const aggregatorTargets: { label: string; location: string; role: string; run: () => Promise<CrawlResult> }[] = [];
   for (const role of roles.length ? roles : ["Projektmanager"]) {
@@ -231,7 +259,7 @@ export async function searchFeeds(input: {
 
   const crawlerRuns = await Promise.all(
     [
-      ...crawlerTargets.slice(0, 28).map((target) => ({ target, role: target.role })),
+      ...crawlerTargets.slice(0, 60).map((target) => ({ target, role: target.role })),
       ...aggregatorTargets.slice(0, 48).map((target) => ({ target, role: target.role })),
     ].map(async ({ target, role }) => {
       try {
