@@ -12,6 +12,7 @@ import {
   MessagesSquare,
   Search,
   Settings,
+  UploadCloud,
   UserRound,
   X,
 } from "lucide-react";
@@ -31,6 +32,7 @@ import {
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard", icon: Gauge },
+  { to: "/lebenslauf", label: "Lebenslauf-Upload", icon: UploadCloud },
   { to: "/profil", label: "Mein Profil", icon: UserRound },
   { to: "/stellen", label: "Stellensuche", icon: Briefcase },
   { to: "/match", label: "Match-Analysen", icon: Search },

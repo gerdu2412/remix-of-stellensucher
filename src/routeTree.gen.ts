@@ -17,6 +17,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedDokumenteRouteImport } from './routes/_authenticated/dokumente'
 import { Route as AuthenticatedEinstellungenRouteImport } from './routes/_authenticated/einstellungen'
 import { Route as AuthenticatedInterviewRouteImport } from './routes/_authenticated/interview'
+import { Route as AuthenticatedLebenslaufRouteImport } from './routes/_authenticated/lebenslauf'
 import { Route as AuthenticatedMatchRouteImport } from './routes/_authenticated/match'
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated/profil'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
@@ -64,6 +65,11 @@ const AuthenticatedInterviewRoute = AuthenticatedInterviewRouteImport.update({
   path: '/interview',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedLebenslaufRoute = AuthenticatedLebenslaufRouteImport.update({
+  id: '/lebenslauf',
+  path: '/lebenslauf',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedMatchRoute = AuthenticatedMatchRouteImport.update({
   id: '/match',
   path: '/match',
@@ -100,6 +106,7 @@ export interface FileRoutesByFullPath {
   '/dokumente': typeof AuthenticatedDokumenteRoute
   '/einstellungen': typeof AuthenticatedEinstellungenRoute
   '/interview': typeof AuthenticatedInterviewRoute
+  '/lebenslauf': typeof AuthenticatedLebenslaufRoute
   '/match': typeof AuthenticatedMatchRoute
   '/profil': typeof AuthenticatedProfilRoute
   '/api/chat': typeof ApiChatRoute
@@ -114,6 +121,7 @@ export interface FileRoutesByTo {
   '/dokumente': typeof AuthenticatedDokumenteRoute
   '/einstellungen': typeof AuthenticatedEinstellungenRoute
   '/interview': typeof AuthenticatedInterviewRoute
+  '/lebenslauf': typeof AuthenticatedLebenslaufRoute
   '/match': typeof AuthenticatedMatchRoute
   '/profil': typeof AuthenticatedProfilRoute
   '/api/chat': typeof ApiChatRoute
@@ -130,6 +138,7 @@ export interface FileRoutesById {
   '/_authenticated/dokumente': typeof AuthenticatedDokumenteRoute
   '/_authenticated/einstellungen': typeof AuthenticatedEinstellungenRoute
   '/_authenticated/interview': typeof AuthenticatedInterviewRoute
+  '/_authenticated/lebenslauf': typeof AuthenticatedLebenslaufRoute
   '/_authenticated/match': typeof AuthenticatedMatchRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
   '/api/chat': typeof ApiChatRoute
@@ -146,6 +155,7 @@ export interface FileRouteTypes {
     | '/dokumente'
     | '/einstellungen'
     | '/interview'
+    | '/lebenslauf'
     | '/match'
     | '/profil'
     | '/api/chat'
@@ -160,6 +170,7 @@ export interface FileRouteTypes {
     | '/dokumente'
     | '/einstellungen'
     | '/interview'
+    | '/lebenslauf'
     | '/match'
     | '/profil'
     | '/api/chat'
@@ -175,6 +186,7 @@ export interface FileRouteTypes {
     | '/_authenticated/dokumente'
     | '/_authenticated/einstellungen'
     | '/_authenticated/interview'
+    | '/_authenticated/lebenslauf'
     | '/_authenticated/match'
     | '/_authenticated/profil'
     | '/api/chat'
@@ -247,6 +259,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInterviewRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/lebenslauf': {
+      id: '/_authenticated/lebenslauf'
+      path: '/lebenslauf'
+      fullPath: '/lebenslauf'
+      preLoaderRoute: typeof AuthenticatedLebenslaufRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/match': {
       id: '/_authenticated/match'
       path: '/match'
@@ -291,6 +310,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedDokumenteRoute: typeof AuthenticatedDokumenteRoute
   AuthenticatedEinstellungenRoute: typeof AuthenticatedEinstellungenRoute
   AuthenticatedInterviewRoute: typeof AuthenticatedInterviewRoute
+  AuthenticatedLebenslaufRoute: typeof AuthenticatedLebenslaufRoute
   AuthenticatedMatchRoute: typeof AuthenticatedMatchRoute
   AuthenticatedProfilRoute: typeof AuthenticatedProfilRoute
   AuthenticatedStellenJobIdRoute: typeof AuthenticatedStellenJobIdRoute
@@ -303,6 +323,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedDokumenteRoute: AuthenticatedDokumenteRoute,
   AuthenticatedEinstellungenRoute: AuthenticatedEinstellungenRoute,
   AuthenticatedInterviewRoute: AuthenticatedInterviewRoute,
+  AuthenticatedLebenslaufRoute: AuthenticatedLebenslaufRoute,
   AuthenticatedMatchRoute: AuthenticatedMatchRoute,
   AuthenticatedProfilRoute: AuthenticatedProfilRoute,
   AuthenticatedStellenJobIdRoute: AuthenticatedStellenJobIdRoute,

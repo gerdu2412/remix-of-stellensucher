@@ -369,6 +369,9 @@ export type Database = {
           created_at: string
           extracted_text: string | null
           file_name: string | null
+          file_path: string | null
+          file_size: number | null
+          file_type: string | null
           id: string
           structured_content: Json
           updated_at: string
@@ -379,6 +382,9 @@ export type Database = {
           created_at?: string
           extracted_text?: string | null
           file_name?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          file_type?: string | null
           id?: string
           structured_content?: Json
           updated_at?: string
@@ -389,6 +395,9 @@ export type Database = {
           created_at?: string
           extracted_text?: string | null
           file_name?: string | null
+          file_path?: string | null
+          file_size?: number | null
+          file_type?: string | null
           id?: string
           structured_content?: Json
           updated_at?: string
