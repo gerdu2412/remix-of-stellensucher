@@ -21,12 +21,13 @@ export function portalSearchLinks(role: string, location: string): PortalLink[] 
 
 /** Bester verfuegbarer Link auf die Firmenwebseite (Suche, da Domain nicht geliefert wird). */
 export function companyWebsiteUrl(company: string): string {
-  return `https://www.google.com/search?q=${enc(`${company} offizielle Webseite`)}&btnI=1`;
+  // DuckDuckGo "!ducky" leitet direkt auf den ersten Treffer weiter (ohne Consent-Zwischenseite).
+  return `https://duckduckgo.com/?q=${enc(`!ducky ${company} offizielle Website`)}`;
 }
 
 /** Karriere-/Jobseite des Unternehmens. */
 export function companyCareersUrl(company: string): string {
-  return `https://www.google.com/search?q=${enc(`${company} Karriere Stellenangebote`)}`;
+  return `https://duckduckgo.com/?q=${enc(`${company} Karriere Stellenangebote Jobs`)}`;
 }
 
 /** Direktsuchen in den fuehrenden Portalen in AT, CH, LI und LU. */
