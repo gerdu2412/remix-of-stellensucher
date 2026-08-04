@@ -6,6 +6,7 @@ import {
   type CrawlResult,
 } from "./jobcrawler.server";
 import { companyCareersUrl, companyWebsiteUrl, portalSearchLinks, regionalPortalLinks, type PortalLink } from "./joblinks";
+import { searchAdzuna, searchCareerjet, searchJooble } from "./jobaggregators.server";
 
 const BASE = "https://rest.arbeitsagentur.de/jobboerse/jobsuche-service";
 const API_KEY = "jobboerse-jobsuche";
@@ -204,9 +205,28 @@ export async function searchFeeds(input: {
     crawlerTargets.push({ label: "Moovijob (LU)", location: "Luxemburg", run: () => crawlMoovijob(role) });
   }
 
+  // --- Job-Aggregatoren (Adzuna, Jooble, Careerjet) ---
+  const primaryLocation = locations[0] ?? "";
+  const aggregatorTargets: { label: string; location: string; role: string; run: () => Promise<CrawlResult> }[] = [];
+  for (const role of roles.length ? roles : ["Projektmanager"]) {
+    aggregatorTargets.push({ label: "Adzuna (Deutschland)", location: primaryLocation || "Deutschland", role, run: () => searchAdzuna(role, "de", primaryLocation) });
+    aggregatorTargets.push({ label: "Adzuna (Österreich)", location: "Österreich", role, run: () => searchAdzuna(role, "at", "") });
+    aggregatorTargets.push({ label: "Adzuna (Schweiz)", location: "Schweiz", role, run: () => searchAdzuna(role, "ch", "") });
+    aggregatorTargets.push({ label: "Jooble", location: primaryLocation || "Deutschland", role, run: () => searchJooble(role, primaryLocation) });
+    aggregatorTargets.push({ label: "Careerjet (Deutschland)", location: primaryLocation || "Deutschland", role, run: () => searchCareerjet(role, "de", primaryLocation) });
+    aggregatorTargets.push({ label: "Careerjet (Österreich)", location: "Österreich", role, run: () => searchCareerjet(role, "at", "") });
+    aggregatorTargets.push({ label: "Careerjet (Schweiz)", location: "Schweiz", role, run: () => searchCareerjet(role, "ch", "") });
+    aggregatorTargets.push({ label: "Careerjet (Luxemburg)", location: "Luxemburg", role, run: () => searchCareerjet(role, "lu", "") });
+  }
+
   const crawlerRuns = await Promise.all(
-    crawlerTargets.slice(0, 20).map(async (target, index) => {
-      const role = (roles.length ? roles : ["Projektmanager"])[Math.floor(index / 5)] ?? roles[0] ?? "Projektmanager";
+    [
+      ...crawlerTargets.slice(0, 20).map((target, index) => ({
+        target,
+        role: (roles.length ? roles : ["Projektmanager"])[Math.floor(index / 5)] ?? roles[0] ?? "Projektmanager",
+      })),
+      ...aggregatorTargets.slice(0, 32).map((target) => ({ target, role: target.role })),
+    ].map(async ({ target, role }) => {
       try {
         return { target, role, result: await target.run(), error: "" };
       } catch (error) {
