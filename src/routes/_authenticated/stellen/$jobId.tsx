@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
-import { ArrowLeft, Loader2, Sparkles } from "lucide-react";
+import { ArrowLeft, ExternalLink, Loader2, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -36,6 +36,7 @@ import {
   useUpdateRow,
   useUpsertRow,
 } from "@/lib/queries";
+import { companyCareersUrl, companyWebsiteUrl } from "@/lib/joblinks";
 
 export const Route = createFileRoute("/_authenticated/stellen/$jobId")({
   head: () => ({
