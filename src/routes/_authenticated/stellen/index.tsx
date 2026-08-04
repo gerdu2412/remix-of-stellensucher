@@ -210,7 +210,46 @@ function StellenPage() {
 
   const okSources = runGroups.filter((s) => s.errors === 0 && s.scanned > 0);
   const problemSources = runGroups.filter((s) => s.errors > 0 || s.scanned === 0);
-  const statsByName = useMemo(() => new Map(runGroups.map((s) => [s.source.toLowerCase(), s])), [runGroups]);
+  /**
+   * Portal-Namen der "Weiteren Quellen" auf die Labels der tatsaechlich
+   * durchsuchten Quellen abbilden (z. B. "StepStone" -> "StepStone Deutschland").
+   */
+  const statsFor = useMemo(() => {
+    const aliases: Record<string, string[]> = {
+      "stepstone": ["stepstone deutschland"],
+      "stepstone.at": ["stepstone österreich"],
+      "linkedin jobs": ["linkedin"],
+      "xing jobs": ["xing"],
+      "job-room": ["job-room"],
+      "jobs.ch": ["jobs.ch"],
+      "karriere.at": ["karriere.at"],
+      "moovijob": ["moovijob"],
+      "indeed": ["indeed"],
+      "adzuna": ["adzuna"],
+      "careerjet": ["careerjet"],
+      "jooble": ["jooble"],
+      "theirstack": ["theirstack"],
+      "techmap": ["techmap"],
+      "nomado24": ["nomado24"],
+      "metajob.de": ["metajob"],
+    };
+    return (portalName: string) => {
+      const key = portalName.toLowerCase();
+      const prefixes = aliases[key] ?? [key];
+      const hits = runGroups.filter((g) =>
+        prefixes.some((p) => g.source.toLowerCase().startsWith(p)),
+      );
+      if (!hits.length) return null;
+      return hits.reduce(
+        (acc, g) => ({
+          scanned: acc.scanned + g.scanned,
+          matched: acc.matched + g.matched,
+          available: acc.available + g.available,
+        }),
+        { scanned: 0, matched: 0, available: 0 },
+      );
+    };
+  }, [runGroups]);
 
   async function importJob() {
     if (raw.trim().length < 30) {
