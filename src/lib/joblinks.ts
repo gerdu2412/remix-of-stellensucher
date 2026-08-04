@@ -2,21 +2,35 @@ export type PortalLink = { name: string; url: string; query: string; location: s
 
 const enc = encodeURIComponent;
 
+/** Pfad-Segmente brauchen Bindestriche statt Leerzeichen/Umlaute. */
+function slug(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/ä/g, "ae")
+    .replace(/ö/g, "oe")
+    .replace(/ü/g, "ue")
+    .replace(/ß/g, "ss")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 /** Deep-Links in die grossen Stellenboersen fuer eine Rolle/Region. */
 export function portalSearchLinks(role: string, location: string): PortalLink[] {
   const loc = location || "Deutschland";
   const base = (name: string, url: string): PortalLink => ({ name, url, query: role, location: loc });
   return [
     base("LinkedIn Jobs", `https://www.linkedin.com/jobs/search/?keywords=${enc(role)}&location=${enc(loc)}`),
-    base("Indeed", `https://de.indeed.com/jobs?q=${enc(role)}&l=${enc(location)}`),
-    base("StepStone", `https://www.stepstone.de/jobs/${enc(role)}/in-${enc(loc)}`),
-    base("Xing Jobs", `https://www.xing.com/jobs/search?keywords=${enc(role)}&location=${enc(loc)}`),
+    base("Indeed", `https://de.indeed.com/jobs?q=${enc(role)}&l=${enc(loc)}`),
+    base("StepStone", `https://www.stepstone.de/jobs/${slug(role)}/in-${slug(loc)}`),
+    base("Xing Jobs", `https://www.xing.com/jobs/search?keywords=${enc(role)}&location=${enc(loc)}&sc_o=jobs_search_button`),
     base("Google Jobs", `https://www.google.com/search?q=${enc(`${role} ${loc} Stelle`)}&ibp=htl;jobs`),
-    base("Adzuna", `https://www.adzuna.de/search?q=${enc(role)}&loc=${enc(loc)}`),
+    base("Adzuna", `https://www.adzuna.de/search?q=${enc(role)}&w=${enc(loc)}`),
     base("Jooble", `https://de.jooble.org/SearchResult?ukw=${enc(role)}&rgns=${enc(loc)}`),
     base("Careerjet", `https://www.careerjet.de/stellenangebote?s=${enc(role)}&l=${enc(loc)}`),
-    base("metajob.de", `https://www.metajob.de/${enc(role)}`),
-    base("Nomado24", `https://www.nomado24.de/de/remote-jobs/alle?query=${enc(role)}`),
+    base("metajob.de", `https://www.metajob.de/${slug(role)}`),
+    base("Nomado24", `https://www.nomado24.de/?s=${enc(role)}`),
     base("TheirStack", `https://theirstack.com/en/jobs?q=${enc(role)}`),
     base(
       "Firmen-Karriereseiten",
@@ -40,13 +54,13 @@ export function companyCareersUrl(company: string): string {
 export function regionalPortalLinks(role: string): PortalLink[] {
   const link = (name: string, url: string, location: string): PortalLink => ({ name, url, query: role, location });
   return [
-    link("karriere.at", `https://www.karriere.at/jobs/${enc(role)}`, "Österreich"),
-    link("StepStone.at", `https://www.stepstone.at/jobs/${enc(role)}`, "Österreich"),
+    link("karriere.at", `https://www.karriere.at/jobs/${slug(role)}`, "Österreich"),
+    link("StepStone.at", `https://www.stepstone.at/jobs/${slug(role)}`, "Österreich"),
     link("jobs.ch", `https://www.jobs.ch/de/stellenangebote/?term=${enc(role)}`, "Schweiz"),
     link("Job-Room", `https://www.job-room.ch/job-search?query=${enc(role)}`, "Schweiz / Liechtenstein"),
-    link("jobs.li", `https://www.jobs.li/stellenangebote?search=${enc(role)}`, "Liechtenstein"),
-    link("Moovijob", `https://www.moovijob.com/de/jobs?query=${enc(role)}`, "Luxemburg"),
-    link("jobs.lu", `https://www.jobs.lu/jobsearch?keywords=${enc(role)}`, "Luxemburg"),
-    link("ADEM", `https://adem.public.lu/de/emploi/offres-emploi.html`, "Luxemburg"),
+    link("jobs.li", `https://www.jobs.li/de/jobs?search=${enc(role)}`, "Liechtenstein"),
+    link("Moovijob", `https://www.moovijob.com/de/suche?q=${enc(role)}`, "Luxemburg"),
+    link("jobs.lu", `https://www.jobs.lu/de/jobs?keywords=${enc(role)}`, "Luxemburg"),
+    link("ADEM", `https://adem.public.lu/de/demandeurs-demploi/offres-emploi.html`, "Luxemburg"),
   ];
 }
