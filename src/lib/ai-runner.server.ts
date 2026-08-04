@@ -43,6 +43,11 @@ function mapGatewayError(error: unknown): Error {
   if (status === 402) {
     return new Error("Das KI-Guthaben ist aufgebraucht. Bitte laden Sie Ihr Guthaben auf.");
   }
+  if (status === 403) {
+    return new Error(
+      "Das KI-Kreditlimit des Workspaces ist erreicht. Bitte das Limit erhöhen oder Guthaben aufladen.",
+    );
+  }
   console.error("AI gateway error", error);
   return new Error("Die KI-Anfrage ist fehlgeschlagen. Bitte erneut versuchen.");
 }
