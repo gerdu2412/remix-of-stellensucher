@@ -151,6 +151,36 @@ function JobDetail() {
         }
       />
 
+      <div className="mb-4 flex flex-wrap items-center gap-3 text-sm">
+        {job.data.original_url && (
+          <a
+            href={job.data.original_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 hover:underline"
+          >
+            Stellenanzeige öffnen <ExternalLink className="size-3.5" />
+          </a>
+        )}
+        <a
+          href={companyWebsiteUrl(job.data.company)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 hover:underline"
+        >
+          Firmenwebseite <ExternalLink className="size-3.5" />
+        </a>
+        <a
+          href={companyCareersUrl(job.data.company)}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1 hover:underline"
+        >
+          Karriereseite <ExternalLink className="size-3.5" />
+        </a>
+        {job.data.source && <span className="text-muted-foreground">Quelle: {job.data.source}</span>}
+      </div>
+
       <Tabs defaultValue="match">
         <TabsList className="flex-wrap">
           <TabsTrigger value="match">Match-Analyse</TabsTrigger>
