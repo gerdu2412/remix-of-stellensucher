@@ -22,7 +22,7 @@ export function portalSearchLinks(role: string, location: string): PortalLink[] 
 /** Bester verfuegbarer Link auf die Firmenwebseite (Suche, da Domain nicht geliefert wird). */
 export function companyWebsiteUrl(company: string): string {
   // DuckDuckGo "!ducky" leitet direkt auf den ersten Treffer weiter (ohne Consent-Zwischenseite).
-  return `https://duckduckgo.com/?q=${enc(`\\ducky ${company} offizielle Website`)}`;
+  return `https://duckduckgo.com/?q=${enc(`!ducky ${company} offizielle Website`)}`;
 }
 
 /** Karriere-/Jobseite des Unternehmens. */
