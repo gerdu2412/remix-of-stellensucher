@@ -11,6 +11,63 @@ const UA =
 
 export type RenderMode = "browserless" | "scrapingbee" | "brightdata" | "plain";
 
+/* ---------- Kreditschonung: Cache + Budget ---------- */
+
+/** Wie lange ein gerendertes Ergebnis wiederverwendet wird (ms). */
+const CACHE_TTL_MS = 6 * 60 * 60 * 1000;
+/** Maximale kostenpflichtige Render-Aufrufe pro Zeitfenster. */
+const RENDER_BUDGET = 12;
+const BUDGET_WINDOW_MS = 60 * 60 * 1000;
+
+const cache = new Map<string, { html: string; at: number }>();
+let budgetWindowStart = 0;
+let budgetUsed = 0;
+
+function cacheGet(url: string): string | null {
+  const hit = cache.get(url);
+  if (!hit) return null;
+  if (Date.now() - hit.at > CACHE_TTL_MS) {
+    cache.delete(url);
+    return null;
+  }
+  return hit.html;
+}
+
+function cacheSet(url: string, html: string): void {
+  if (cache.size > 200) cache.clear();
+  cache.set(url, { html, at: Date.now() });
+}
+
+/** True, solange noch Render-Budget im aktuellen Zeitfenster frei ist. */
+function takeBudget(): boolean {
+  const now = Date.now();
+  if (now - budgetWindowStart > BUDGET_WINDOW_MS) {
+    budgetWindowStart = now;
+    budgetUsed = 0;
+  }
+  if (budgetUsed >= RENDER_BUDGET) return false;
+  budgetUsed += 1;
+  return true;
+}
+
+export function renderBudgetStatus(): { used: number; limit: number } {
+  const now = Date.now();
+  if (now - budgetWindowStart > BUDGET_WINDOW_MS) return { used: 0, limit: RENDER_BUDGET };
+  return { used: budgetUsed, limit: RENDER_BUDGET };
+}
+
+/** Heuristik: sieht die Seite nach Blockade/Bot-Wall aus? */
+function looksBlocked(html: string): boolean {
+  if (html.length < 3000) return true;
+  const lower = html.slice(0, 5000).toLowerCase();
+  return (
+    lower.includes("captcha") ||
+    lower.includes("access denied") ||
+    lower.includes("just a moment") ||
+    lower.includes("verify you are human")
+  );
+}
+
 export function renderProvider(): RenderMode {
   if (process.env["BROWSERLESS_API_KEY"]) return "browserless";
   if (process.env["SCRAPINGBEE_API_KEY"]) return "scrapingbee";
@@ -50,6 +107,12 @@ async function plainFetch(url: string): Promise<string> {
 /** Laedt eine Seite mit echtem Browser-Rendering (JS ausgefuehrt), wenn konfiguriert. */
 export async function renderHtml(url: string, waitMs = 2500): Promise<string> {
   const provider = renderProvider();
+  if (provider === "plain") return plainFetch(url);
+
+  const cached = cacheGet(url);
+  if (cached) return cached;
+  // Budget aufgebraucht: kein kostenpflichtiger Aufruf mehr, Direktabruf als Ersatz.
+  if (!takeBudget()) return plainFetch(url);
 
   if (provider === "browserless") {
     const key = process.env["BROWSERLESS_API_KEY"]!;
@@ -66,7 +129,9 @@ export async function renderHtml(url: string, waitMs = 2500): Promise<string> {
       }),
     });
     if (!res.ok) throw new Error(`Browserless ${res.status}`);
-    return res.text();
+    const html = await res.text();
+    cacheSet(url, html);
+    return html;
   }
 
   if (provider === "scrapingbee") {
@@ -81,7 +146,9 @@ export async function renderHtml(url: string, waitMs = 2500): Promise<string> {
     });
     const res = await fetch(`https://app.scrapingbee.com/api/v1/?${params.toString()}`);
     if (!res.ok) throw new Error(`ScrapingBee ${res.status}`);
-    return res.text();
+    const html = await res.text();
+    cacheSet(url, html);
+    return html;
   }
 
   if (provider === "brightdata") {
@@ -93,18 +160,30 @@ export async function renderHtml(url: string, waitMs = 2500): Promise<string> {
       body: JSON.stringify({ zone, url, format: "raw" }),
     });
     if (!res.ok) throw new Error(`Bright Data ${res.status}`);
-    return res.text();
+    const html = await res.text();
+    cacheSet(url, html);
+    return html;
   }
 
   return plainFetch(url);
 }
 
-/** Rendern mit Fallback auf den Direktabruf, damit einzelne Ausfaelle nicht die Suche stoppen. */
+/**
+ * Kreditschonend: zuerst Direktabruf (kostenlos), nur bei Blockade/leerer Seite
+ * wird der kostenpflichtige Browser-Dienst genutzt.
+ */
 export async function renderHtmlSafe(url: string, waitMs?: number): Promise<string> {
+  const cached = cacheGet(url);
+  if (cached) return cached;
   try {
-    return await renderHtml(url, waitMs);
+    const html = await plainFetch(url);
+    if (!looksBlocked(html) || renderProvider() === "plain") return html;
   } catch (error) {
     if (renderProvider() === "plain") throw error;
+  }
+  try {
+    return await renderHtml(url, waitMs);
+  } catch {
     return plainFetch(url);
   }
 }

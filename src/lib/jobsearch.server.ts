@@ -220,7 +220,8 @@ export async function searchFeeds(input: {
 
   // --- Gehosteter Browser (Playwright-Rendering) fuer JS-lastige Portale ---
   if (browserCrawlersEnabled()) {
-    for (const role of activeRoles) {
+    // Kreditschonend: nur die ersten Suchbegriffe durch den kostenpflichtigen Browser.
+    for (const role of activeRoles.slice(0, 2)) {
       crawlerTargets.push({ label: "LinkedIn Jobs", location: primaryLocation || "Deutschland", role, run: () => crawlLinkedIn(role, primaryLocation) });
       crawlerTargets.push({ label: "Indeed", location: primaryLocation || "Deutschland", role, run: () => crawlIndeed(role, primaryLocation) });
       crawlerTargets.push({ label: "StepStone Deutschland", location: primaryLocation || "Deutschland", role, run: () => crawlStepstoneDe(role, primaryLocation) });
