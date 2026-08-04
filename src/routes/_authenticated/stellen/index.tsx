@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ExternalLink, Loader2, Plus, RefreshCw, Sparkles } from "lucide-react";
+import { ExternalLink, Loader2, Plus, RefreshCw, Sparkles, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -95,6 +95,7 @@ function StellenPage() {
   const [activeTerms, setActiveTerms] = useState<string[]>(DEFAULT_TERMS);
   const [customRegions, setCustomRegions] = useState<string[]>([]);
   const [newRegion, setNewRegion] = useState("");
+  const [fixOpen, setFixOpen] = useState(false);
   const [activeRegions, setActiveRegions] = useState<string[]>(PRIORITY_REGIONS);
 
   const matchByJob = useMemo(
