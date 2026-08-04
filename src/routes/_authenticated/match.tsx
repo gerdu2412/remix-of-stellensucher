@@ -1,5 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { EmptyState, PageHeader, ScoreBar, StatusBadge } from "@/components/shared/ui-bits";
+import { BulkMatchButton } from "@/components/shared/bulk-match";
 import { useJobs, useMatches } from "@/lib/queries";
 
 export const Route = createFileRoute("/_authenticated/match")({
@@ -19,12 +20,24 @@ function MatchPage() {
   const jobs = useJobs();
   const jobById = new Map((jobs.data ?? []).map((j) => [j.id, j]));
   const list = [...(matches.data ?? [])].sort((a, b) => b.overall_score - a.overall_score);
+  const openCount = (jobs.data ?? []).filter((j) => !list.some((m) => m.job_posting_id === j.id)).length;
 
   return (
     <div>
-      <PageHeader title="Match-Analysen" description="Phase 2: Vergleich aller analysierten Stellen nach Passung." />
+      <PageHeader
+        title="Match-Analysen"
+        description={
+          openCount
+            ? `Phase 2: Vergleich aller analysierten Stellen nach Passung. ${openCount} Stellen noch ohne Analyse.`
+            : "Phase 2: Vergleich aller analysierten Stellen nach Passung."
+        }
+        actions={<BulkMatchButton />}
+      />
       {list.length === 0 ? (
-        <EmptyState title="Noch keine Analysen" description="Starten Sie eine Match-Analyse aus einer Stellendetailseite." />
+        <EmptyState
+          title="Noch keine Analysen"
+          description="Starten Sie die Analyse für alle Stellen oder öffnen Sie eine Stellendetailseite."
+        />
       ) : (
         <div className="space-y-3">
           {list.map((m) => {
