@@ -465,7 +465,9 @@ function StellenPage() {
               <div className="text-left">
                 <p className="font-display text-sm font-semibold">Weitere Quellen (DE, AT, CH, LI, LU)</p>
                 <p className="text-xs font-normal text-muted-foreground">
-                  Direktsuche in den grossen Stellenboersen und auf Firmen-Karriereseiten mit Ihren Zielrollen und Regionen.
+                  Direktsuche in den grossen Stellenboersen – erzeugt aus {selectedTerms.length || profileRoles.length}{" "}
+                  aktiven Suchbegriffen und{" "}
+                  {selectedRegions.length || 1} Region(en) · {portals.length} Links
                 </p>
               </div>
             </AccordionTrigger>
