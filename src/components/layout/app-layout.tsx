@@ -1,5 +1,7 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
 import { useEffect, useState, type ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRouter } from "@tanstack/react-router";
 import {
   Bell,
   Briefcase,
@@ -10,6 +12,7 @@ import {
   LogOut,
   Menu,
   MessagesSquare,
+  RefreshCw,
   Search,
   Settings,
   UploadCloud,
@@ -44,13 +47,26 @@ const NAV = [
 
 export function AppLayout({ children }: { children: ReactNode }) {
   const [open, setOpen] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const navigate = useNavigate();
+  const router = useRouter();
+  const queryClient = useQueryClient();
   const { data: profile } = useProfile();
   const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
     setOpen(false);
   }, [pathname]);
+
+  const refreshPage = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    try {
+      await Promise.all([queryClient.invalidateQueries(), router.invalidate()]);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   const signOut = async () => {
     await supabase.auth.signOut();
@@ -119,6 +135,17 @@ export function AppLayout({ children }: { children: ReactNode }) {
             <Input placeholder="Stellen, Unternehmen, Dokumente suchen" className="pl-9" />
           </div>
           <div className="ml-auto flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={refreshPage}
+              disabled={refreshing}
+              aria-label="Seite aktualisieren"
+              className="gap-2"
+            >
+              <RefreshCw className={cn("h-4 w-4", refreshing && "animate-spin")} />
+              <span className="hidden sm:inline">{refreshing ? "Aktualisiere…" : "Aktualisieren"}</span>
+            </Button>
             <Button variant="ghost" size="icon" aria-label="Benachrichtigungen">
               <Bell className="h-4 w-4" />
             </Button>
