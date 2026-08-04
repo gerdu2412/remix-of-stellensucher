@@ -1,5 +1,5 @@
 import { cvSchema } from "../src/lib/ai-schemas";
-import { z } from "zod";
-const j = (z as any).toJSONSchema(cvSchema, { io: "input" });
-console.log(JSON.stringify(j).slice(0, 700));
-console.log(JSON.stringify(cvSchema.parse({ summary: null, experience: null })).slice(0, 300));
+import { zodSchema } from "ai";
+const s: any = zodSchema(cvSchema as any);
+console.log(JSON.stringify(s.jsonSchema).slice(0, 900));
+console.log(JSON.stringify(cvSchema.parse({ summary: null, experience: null })).slice(0, 200));
