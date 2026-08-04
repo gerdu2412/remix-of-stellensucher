@@ -198,6 +198,38 @@ function StellenPage() {
 
       <Panel className="mb-4">
         <Accordion type="multiple" defaultValue={["quellen"]}>
+          {run && (
+            <AccordionItem value="begriffe" className="border-0 border-b border-border">
+              <AccordionTrigger className="py-1 hover:no-underline">
+                <div className="text-left">
+                  <p className="font-display text-sm font-semibold">Suchbegriffe und Regionen</p>
+                  <p className="text-xs font-normal text-muted-foreground">
+                    {[...new Set(run.sources.map((s) => s.query).filter(Boolean))].length} Suchbegriffe ·{" "}
+                    {[...new Set(run.sources.map((s) => s.location).filter(Boolean))].length} Regionen
+                  </p>
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="pt-2">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Verwendete Suchbegriffe</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {[...new Set(run.sources.map((s) => s.query).filter(Boolean))].map((q) => (
+                    <span key={q} className="rounded-full border border-border px-3 py-1 text-xs">
+                      {q}
+                    </span>
+                  ))}
+                </div>
+                <p className="mt-3 text-xs uppercase tracking-wide text-muted-foreground">Regionen</p>
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {[...new Set(run.sources.map((s) => s.location).filter(Boolean))].map((l) => (
+                    <span key={l} className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">
+                      {l}
+                    </span>
+                  ))}
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          )}
+
           <AccordionItem value="quellen" className="border-0">
             <AccordionTrigger className="py-1 hover:no-underline">
               <div className="text-left">
@@ -212,25 +244,6 @@ function StellenPage() {
             <AccordionContent className="pt-2">
         {run ? (
           <div className="space-y-4">
-            <div>
-              <p className="text-xs uppercase tracking-wide text-muted-foreground">Verwendete Suchbegriffe</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {[...new Set(run.sources.map((s) => s.query).filter(Boolean))].map((q) => (
-                  <span key={q} className="rounded-full border border-border px-3 py-1 text-xs">
-                    {q}
-                  </span>
-                ))}
-              </div>
-              <p className="mt-3 text-xs uppercase tracking-wide text-muted-foreground">Regionen</p>
-              <div className="mt-2 flex flex-wrap gap-2">
-                {[...new Set(run.sources.map((s) => s.location).filter(Boolean))].map((l) => (
-                  <span key={l} className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">
-                    {l}
-                  </span>
-                ))}
-              </div>
-            </div>
-
             <div className="overflow-x-auto">
               <table className="w-full min-w-[560px] text-sm">
                 <thead>
