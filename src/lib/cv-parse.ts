@@ -32,7 +32,7 @@ async function parsePdf(buffer: ArrayBuffer): Promise<string> {
 }
 
 async function parseWord(buffer: ArrayBuffer): Promise<string> {
-  const mammoth = await import("mammoth/mammoth.browser.js");
+  const mammoth = (await import(/* @vite-ignore */ "mammoth/mammoth.browser.js" as string)) as any;
   const result = await (mammoth as any).extractRawText({ arrayBuffer: buffer });
   return String(result.value ?? "").trim();
 }
@@ -42,6 +42,7 @@ async function parseExcel(buffer: ArrayBuffer): Promise<string> {
   const wb = XLSX.read(buffer, { type: "array" });
   return wb.SheetNames.map((name) => {
     const sheet = wb.Sheets[name];
+    if (!sheet) return "";
     const csv = XLSX.utils.sheet_to_csv(sheet, { blankrows: false });
     return `# ${name}\n${csv}`.trim();
   })
