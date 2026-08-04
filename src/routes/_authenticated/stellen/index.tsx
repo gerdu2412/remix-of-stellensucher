@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { ExternalLink, Loader2, Plus, RefreshCw, Sparkles } from "lucide-react";
+import { ExternalLink, Loader2, Plus, RefreshCw, Sparkles, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -95,6 +95,7 @@ function StellenPage() {
   const [activeTerms, setActiveTerms] = useState<string[]>(DEFAULT_TERMS);
   const [customRegions, setCustomRegions] = useState<string[]>([]);
   const [newRegion, setNewRegion] = useState("");
+  const [fixOpen, setFixOpen] = useState(false);
   const [activeRegions, setActiveRegions] = useState<string[]>(PRIORITY_REGIONS);
 
   const matchByJob = useMemo(
@@ -175,6 +176,38 @@ function StellenPage() {
       regions: e.regions.size,
     }));
   }, [portals]);
+
+  const runGroups = useMemo(() => {
+    if (!run) return [] as {
+      source: string;
+      url: string;
+      runs: number;
+      scanned: number;
+      matched: number;
+      available: number;
+      errors: number;
+      messages: string[];
+    }[];
+    const map = new Map<string, { source: string; url: string; runs: number; scanned: number; matched: number; available: number; errors: number; messages: string[] }>();
+    for (const s of run.sources) {
+      const prev = map.get(s.source);
+      map.set(s.source, {
+        source: s.source,
+        url: prev?.url || s.url,
+        runs: (prev?.runs ?? 0) + 1,
+        scanned: (prev?.scanned ?? 0) + s.scanned,
+        matched: (prev?.matched ?? 0) + s.matched,
+        available: (prev?.available ?? 0) + s.available,
+        errors: (prev?.errors ?? 0) + (s.error ? 1 : 0),
+        messages: s.error && !(prev?.messages ?? []).includes(s.error) ? [...(prev?.messages ?? []), s.error] : (prev?.messages ?? []),
+      });
+    }
+    return [...map.values()];
+  }, [run]);
+
+  const okSources = runGroups.filter((s) => s.errors === 0 && s.scanned > 0);
+  const problemSources = runGroups.filter((s) => s.errors > 0 || s.scanned === 0);
+  const statsByName = useMemo(() => new Map(runGroups.map((s) => [s.source.toLowerCase(), s])), [runGroups]);
 
   async function importJob() {
     if (raw.trim().length < 30) {
@@ -413,21 +446,7 @@ function StellenPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {[...run.sources
-                    .reduce((map, s) => {
-                      const prev = map.get(s.source);
-                      map.set(s.source, {
-                        source: s.source,
-                        url: prev?.url || s.url,
-                        runs: (prev?.runs ?? 0) + 1,
-                        scanned: (prev?.scanned ?? 0) + s.scanned,
-                        matched: (prev?.matched ?? 0) + s.matched,
-                        available: (prev?.available ?? 0) + s.available,
-                        errors: (prev?.errors ?? 0) + (s.error ? 1 : 0),
-                      });
-                      return map;
-                    }, new Map<string, { source: string; url: string; runs: number; scanned: number; matched: number; available: number; errors: number }>())
-                    .values()].map((s) => (
+                  {okSources.map((s) => (
                     <tr key={s.source} className="border-b border-border/60 last:border-0">
                       <td className="py-2 pr-3">
                         {s.url ? (
@@ -445,9 +464,7 @@ function StellenPage() {
                       </td>
                       <td className="py-2 pr-3 text-muted-foreground tabular-nums">{s.runs}</td>
                       <td className="py-2 pr-3 text-right tabular-nums">{s.scanned}</td>
-                      <td className="py-2 pr-3 text-right tabular-nums font-medium">
-                        {s.errors === s.runs ? <span className="text-destructive">Fehler</span> : s.matched}
-                      </td>
+                      <td className="py-2 pr-3 text-right tabular-nums font-medium">{s.matched}</td>
                       <td className="py-2 text-right tabular-nums text-muted-foreground">
                         {s.available.toLocaleString("de-DE")}
                       </td>
@@ -466,6 +483,16 @@ function StellenPage() {
                 </tfoot>
               </table>
             </div>
+            {problemSources.length > 0 ? (
+              <div className="flex flex-wrap items-center gap-2">
+                <p className="text-xs text-muted-foreground">
+                  {problemSources.length} Quelle(n) ohne Treffer oder mit Fehler ausgeblendet.
+                </p>
+                <Button type="button" variant="outline" size="sm" onClick={() => setFixOpen(true)}>
+                  <Wrench className="mr-2 size-4" /> Fehlerbehebung
+                </Button>
+              </div>
+            ) : null}
           </div>
           ) : (
             <p className="text-sm text-muted-foreground">
@@ -489,17 +516,20 @@ function StellenPage() {
             </AccordionTrigger>
             <AccordionContent>
               <div className="overflow-x-auto">
-                <table className="w-full min-w-[480px] text-sm">
+                <table className="w-full min-w-[560px] text-sm">
                   <thead>
                     <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
                       <th className="py-2 pr-3 font-medium">Quelle</th>
-                      <th className="py-2 pr-3 text-right font-medium">Abfragen</th>
-                      <th className="py-2 pr-3 text-right font-medium">Suchbegriffe</th>
-                      <th className="py-2 text-right font-medium">Regionen</th>
+                      <th className="py-2 pr-3 font-medium">Abfragen</th>
+                      <th className="py-2 pr-3 text-right font-medium">Durchsucht</th>
+                      <th className="py-2 pr-3 text-right font-medium">Passend</th>
+                      <th className="py-2 text-right font-medium">Treffer gesamt</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {portalGroups.map((g) => (
+                    {portalGroups.map((g) => {
+                      const stats = statsByName.get(g.name.toLowerCase());
+                      return (
                       <tr key={g.name} className="border-b border-border/60 last:border-0">
                         <td className="py-2 pr-3">
                           <a
@@ -511,17 +541,22 @@ function StellenPage() {
                             {g.name} <ExternalLink className="size-3" />
                           </a>
                         </td>
-                        <td className="py-2 pr-3 text-right tabular-nums">{g.links}</td>
-                        <td className="py-2 pr-3 text-right tabular-nums text-muted-foreground">{g.terms}</td>
-                        <td className="py-2 text-right tabular-nums text-muted-foreground">{g.regions}</td>
+                        <td className="py-2 pr-3 text-muted-foreground tabular-nums">{g.links}</td>
+                        <td className="py-2 pr-3 text-right tabular-nums">{stats ? stats.scanned : "–"}</td>
+                        <td className="py-2 pr-3 text-right tabular-nums font-medium">{stats ? stats.matched : "–"}</td>
+                        <td className="py-2 text-right tabular-nums text-muted-foreground">
+                          {stats ? stats.available.toLocaleString("de-DE") : "–"}
+                        </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                   </tbody>
                   <tfoot>
                     <tr className="border-t border-border font-medium">
                       <td className="py-2 pr-3">Gesamt</td>
-                      <td className="py-2 pr-3 text-right tabular-nums">{portals.length}</td>
+                      <td className="py-2 pr-3 tabular-nums">{portals.length}</td>
                       <td className="py-2" colSpan={2} />
+                      <td className="py-2" />
                     </tr>
                   </tfoot>
                 </table>
@@ -530,6 +565,58 @@ function StellenPage() {
           </AccordionItem>
         </Accordion>
       </Panel>
+
+      <Dialog open={fixOpen} onOpenChange={setFixOpen}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>Fehlerbehebung Quellen</DialogTitle>
+            <DialogDescription>
+              Diese Quellen lieferten keine Anzeigen oder meldeten einen Fehler und werden in der Übersicht ausgeblendet.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="max-h-[50vh] space-y-3 overflow-y-auto">
+            {problemSources.length === 0 ? (
+              <p className="text-sm text-muted-foreground">Aktuell keine problematischen Quellen.</p>
+            ) : (
+              problemSources.map((s) => (
+                <div key={s.source} className="rounded-lg border border-border p-3">
+                  <div className="flex items-center justify-between gap-2">
+                    <p className="text-sm font-medium">{s.source}</p>
+                    <span className="text-xs text-muted-foreground">
+                      {s.runs} Abfragen · {s.scanned} durchsucht
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-destructive">
+                    {s.messages.length ? s.messages.join(" · ") : "Keine Treffer geliefert (Blocker, Limit oder Suchbegriffe zu eng)."}
+                  </p>
+                  {s.url ? (
+                    <a
+                      href={s.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-flex items-center gap-1 text-xs hover:underline"
+                    >
+                      Quelle manuell öffnen <ExternalLink className="size-3" />
+                    </a>
+                  ) : null}
+                </div>
+              ))
+            )}
+          </div>
+          <DialogFooter>
+            <Button
+              onClick={async () => {
+                setFixOpen(false);
+                await updateFeeds();
+              }}
+              disabled={updating}
+            >
+              {updating ? <Loader2 className="mr-2 size-4 animate-spin" /> : <RefreshCw className="mr-2 size-4" />}
+              Erneut versuchen
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
       <div className="mb-4 flex flex-col gap-3 sm:flex-row">
         <div className="flex-1 space-y-1.5">
