@@ -158,6 +158,24 @@ function StellenPage() {
       .filter((link, i, all) => all.findIndex((o) => o.url === link.url) === i);
   }, [selectedTerms.join("|"), searchLocations.join("|"), profileRoles.join("|")]);
 
+  const portalGroups = useMemo(() => {
+    const map = new Map<string, { name: string; url: string; links: number; terms: Set<string>; regions: Set<string> }>();
+    for (const p of portals) {
+      const entry = map.get(p.name) ?? { name: p.name, url: p.url, links: 0, terms: new Set<string>(), regions: new Set<string>() };
+      entry.links += 1;
+      if (p.query) entry.terms.add(p.query);
+      entry.regions.add(p.location || "überall");
+      map.set(p.name, entry);
+    }
+    return [...map.values()].map((e) => ({
+      name: e.name,
+      url: e.url,
+      links: e.links,
+      terms: e.terms.size,
+      regions: e.regions.size,
+    }));
+  }, [portals]);
+
   async function importJob() {
     if (raw.trim().length < 30) {
       toast.error("Bitte den Ausschreibungstext einfügen.");
@@ -465,26 +483,48 @@ function StellenPage() {
               <div className="text-left">
                 <p className="font-display text-sm font-semibold">Weitere Quellen (DE, AT, CH, LI, LU)</p>
                 <p className="text-xs font-normal text-muted-foreground">
-                  Direktsuche in den grossen Stellenboersen – erzeugt aus {selectedTerms.length || profileRoles.length}{" "}
-                  aktiven Suchbegriffen und{" "}
-                  {selectedRegions.length || 1} Region(en) · {portals.length} Links
+                  {portalGroups.length} Portale · {portals.length} vorbereitete Direktsuchen
                 </p>
               </div>
             </AccordionTrigger>
             <AccordionContent>
-              <div className="flex flex-wrap gap-2">
-                {portals.map((p) => (
-                  <a
-                    key={p.url}
-                    href={p.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center gap-1 rounded-full border border-border px-3 py-1 text-xs hover:bg-muted"
-                  >
-                    {p.name}: {p.query}
-                    {p.location ? ` · ${p.location}` : ""} <ExternalLink className="size-3" />
-                  </a>
-                ))}
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[480px] text-sm">
+                  <thead>
+                    <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
+                      <th className="py-2 pr-3 font-medium">Quelle</th>
+                      <th className="py-2 pr-3 text-right font-medium">Abfragen</th>
+                      <th className="py-2 pr-3 text-right font-medium">Suchbegriffe</th>
+                      <th className="py-2 text-right font-medium">Regionen</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {portalGroups.map((g) => (
+                      <tr key={g.name} className="border-b border-border/60 last:border-0">
+                        <td className="py-2 pr-3">
+                          <a
+                            href={g.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 hover:underline"
+                          >
+                            {g.name} <ExternalLink className="size-3" />
+                          </a>
+                        </td>
+                        <td className="py-2 pr-3 text-right tabular-nums">{g.links}</td>
+                        <td className="py-2 pr-3 text-right tabular-nums text-muted-foreground">{g.terms}</td>
+                        <td className="py-2 text-right tabular-nums text-muted-foreground">{g.regions}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t border-border font-medium">
+                      <td className="py-2 pr-3">Gesamt</td>
+                      <td className="py-2 pr-3 text-right tabular-nums">{portals.length}</td>
+                      <td className="py-2" colSpan={2} />
+                    </tr>
+                  </tfoot>
+                </table>
               </div>
             </AccordionContent>
           </AccordionItem>
