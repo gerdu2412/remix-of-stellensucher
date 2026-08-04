@@ -26,6 +26,7 @@ import {
   statusLabel,
 } from "@/components/shared/ui-bits";
 import { aiStructureJob } from "@/lib/ai.functions";
+import { BulkMatchButton } from "@/components/shared/bulk-match";
 import { searchJobFeeds } from "@/lib/jobsearch.functions";
 import { companyCareersUrl, companyWebsiteUrl, portalSearchLinks } from "@/lib/joblinks";
 import { useInsertRow, useJobs, useMatches, useSearchProfile } from "@/lib/queries";
@@ -57,8 +58,8 @@ function StellenPage() {
   const [updating, setUpdating] = useState(false);
   const [run, setRun] = useState<(FeedRun & { imported: number }) | null>(null);
 
-  const scoreByJob = useMemo(
-    () => new Map((matches.data ?? []).map((m) => [m.job_posting_id, m.overall_score])),
+  const matchByJob = useMemo(
+    () => new Map((matches.data ?? []).map((m) => [m.job_posting_id, m])),
     [matches.data],
   );
 
@@ -164,6 +165,7 @@ function StellenPage() {
         description="Erfassen Sie Ausschreibungen, lassen Sie sie strukturieren und priorisieren Sie nach Passung."
         actions={
           <div className="flex flex-wrap gap-2">
+            <BulkMatchButton variant="outline" />
             <Button variant="outline" onClick={updateFeeds} disabled={updating}>
               {updating ? <Loader2 className="mr-2 size-4 animate-spin" /> : <RefreshCw className="mr-2 size-4" />}
               Neue Stellen suchen
@@ -332,7 +334,8 @@ function StellenPage() {
       ) : (
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
           {filtered.map((job) => {
-            const score = scoreByJob.get(job.id);
+            const match = matchByJob.get(job.id);
+            const score = match?.overall_score;
             return (
               <div key={job.id} className="panel panel-hover relative flex flex-col gap-3 p-5">
                 <div className="flex items-start justify-between gap-3">
@@ -347,11 +350,32 @@ function StellenPage() {
                     <p className="truncate text-sm text-muted-foreground">{job.company}</p>
                   </div>
                   {typeof score === "number" && (
-                    <div className="flex size-12 shrink-0 items-center justify-center rounded-full border border-border font-display text-sm font-semibold">
-                      {score}
+                    <div className="flex shrink-0 flex-col items-center gap-1">
+                      <div
+                        className={
+                          "flex size-12 items-center justify-center rounded-full border-2 font-display text-sm font-semibold " +
+                          (score >= 80
+                            ? "border-primary text-primary"
+                            : score >= 60
+                              ? "border-border"
+                              : "border-muted text-muted-foreground")
+                        }
+                      >
+                        {score}
+                      </div>
+                      {match?.outlook && (
+                        <span className="max-w-[6.5rem] text-center text-[10px] leading-tight text-muted-foreground">
+                          {match.outlook}
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>
+                {match?.summary && (
+                  <p className="line-clamp-2 rounded-md bg-muted/50 p-2 text-xs text-muted-foreground">
+                    {match.summary}
+                  </p>
+                )}
                 <p className="line-clamp-3 text-xs text-muted-foreground">{job.description}</p>
                 <div className="mt-auto flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                   <StatusBadge status={job.status} />
