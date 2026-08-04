@@ -49,7 +49,7 @@ function jsonLdJobs(html: string): any[] {
   for (const block of blocks) {
     let parsed: unknown;
     try {
-      parsed = JSON.parse(block[1]);
+      parsed = JSON.parse(block[1] ?? "null");
     } catch {
       continue;
     }
