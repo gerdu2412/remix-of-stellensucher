@@ -211,21 +211,54 @@ function StellenPage() {
             </AccordionTrigger>
             <AccordionContent className="pt-2">
         {run ? (
+          <div className="space-y-4">
+            <div>
+              <p className="text-xs uppercase tracking-wide text-muted-foreground">Verwendete Suchbegriffe</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {[...new Set(run.sources.map((s) => s.query).filter(Boolean))].map((q) => (
+                  <span key={q} className="rounded-full border border-border px-3 py-1 text-xs">
+                    {q}
+                  </span>
+                ))}
+              </div>
+              <p className="mt-3 text-xs uppercase tracking-wide text-muted-foreground">Regionen</p>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {[...new Set(run.sources.map((s) => s.location).filter(Boolean))].map((l) => (
+                  <span key={l} className="rounded-full border border-border px-3 py-1 text-xs text-muted-foreground">
+                    {l}
+                  </span>
+                ))}
+              </div>
+            </div>
+
             <div className="overflow-x-auto">
               <table className="w-full min-w-[560px] text-sm">
                 <thead>
                   <tr className="border-b border-border text-left text-xs uppercase tracking-wide text-muted-foreground">
                     <th className="py-2 pr-3 font-medium">Quelle</th>
-                    <th className="py-2 pr-3 font-medium">Suchbegriff</th>
-                    <th className="py-2 pr-3 font-medium">Region</th>
+                    <th className="py-2 pr-3 font-medium">Abfragen</th>
                     <th className="py-2 pr-3 text-right font-medium">Durchsucht</th>
                     <th className="py-2 pr-3 text-right font-medium">Passend</th>
                     <th className="py-2 text-right font-medium">Treffer gesamt</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {run.sources.map((s, i) => (
-                    <tr key={`${s.query}-${s.location}-${i}`} className="border-b border-border/60 last:border-0">
+                  {[...run.sources
+                    .reduce((map, s) => {
+                      const prev = map.get(s.source);
+                      map.set(s.source, {
+                        source: s.source,
+                        url: prev?.url || s.url,
+                        runs: (prev?.runs ?? 0) + 1,
+                        scanned: (prev?.scanned ?? 0) + s.scanned,
+                        matched: (prev?.matched ?? 0) + s.matched,
+                        available: (prev?.available ?? 0) + s.available,
+                        errors: (prev?.errors ?? 0) + (s.error ? 1 : 0),
+                      });
+                      return map;
+                    }, new Map<string, { source: string; url: string; runs: number; scanned: number; matched: number; available: number; errors: number }>())
+                    .values()].map((s) => (
+                    <tr key={s.source} className="border-b border-border/60 last:border-0">
                       <td className="py-2 pr-3">
                         {s.url ? (
                           <a
@@ -240,11 +273,10 @@ function StellenPage() {
                           s.source
                         )}
                       </td>
-                      <td className="py-2 pr-3">{s.query}</td>
-                      <td className="py-2 pr-3 text-muted-foreground">{s.location}</td>
+                      <td className="py-2 pr-3 text-muted-foreground tabular-nums">{s.runs}</td>
                       <td className="py-2 pr-3 text-right tabular-nums">{s.scanned}</td>
                       <td className="py-2 pr-3 text-right tabular-nums font-medium">
-                        {s.error ? <span className="text-destructive">Fehler</span> : s.matched}
+                        {s.errors === s.runs ? <span className="text-destructive">Fehler</span> : s.matched}
                       </td>
                       <td className="py-2 text-right tabular-nums text-muted-foreground">
                         {s.available.toLocaleString("de-DE")}
@@ -254,7 +286,7 @@ function StellenPage() {
                 </tbody>
                 <tfoot>
                   <tr className="border-t border-border font-medium">
-                    <td className="py-2 pr-3" colSpan={3}>
+                    <td className="py-2 pr-3" colSpan={2}>
                       Gesamt
                     </td>
                     <td className="py-2 pr-3 text-right tabular-nums">{run.scanned}</td>
@@ -264,6 +296,7 @@ function StellenPage() {
                 </tfoot>
               </table>
             </div>
+          </div>
           ) : (
             <p className="text-sm text-muted-foreground">
               Klicken Sie auf „Neue Stellen suchen“, um die angebundenen Stellenportale zu durchsuchen. Anschließend sehen
