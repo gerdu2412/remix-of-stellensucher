@@ -21,7 +21,6 @@ import {
   EmptyState,
   PageHeader,
   Panel,
-  SectionTitle,
   STATUS_OPTIONS,
   StatusBadge,
   statusLabel,
