@@ -15,6 +15,9 @@ export function portalSearchLinks(role: string, location: string): PortalLink[] 
     base("Adzuna", `https://www.adzuna.de/search?q=${enc(role)}&loc=${enc(loc)}`),
     base("Jooble", `https://de.jooble.org/SearchResult?ukw=${enc(role)}&rgns=${enc(loc)}`),
     base("Careerjet", `https://www.careerjet.de/stellenangebote?s=${enc(role)}&l=${enc(loc)}`),
+    base("metajob.de", `https://www.metajob.de/${enc(role)}`),
+    base("Nomado24", `https://www.nomado24.de/de/remote-jobs/alle?query=${enc(role)}`),
+    base("TheirStack", `https://theirstack.com/en/jobs?q=${enc(role)}`),
     base(
       "Firmen-Karriereseiten",
       `https://www.google.com/search?q=${enc(`"${role}" ${loc} (Karriere OR Stellenangebot) -site:indeed.com -site:stepstone.de`)}`,
