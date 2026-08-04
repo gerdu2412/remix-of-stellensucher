@@ -12,6 +12,9 @@ export function portalSearchLinks(role: string, location: string): PortalLink[] 
     base("StepStone", `https://www.stepstone.de/jobs/${enc(role)}/in-${enc(loc)}`),
     base("Xing Jobs", `https://www.xing.com/jobs/search?keywords=${enc(role)}&location=${enc(loc)}`),
     base("Google Jobs", `https://www.google.com/search?q=${enc(`${role} ${loc} Stelle`)}&ibp=htl;jobs`),
+    base("Adzuna", `https://www.adzuna.de/search?q=${enc(role)}&loc=${enc(loc)}`),
+    base("Jooble", `https://de.jooble.org/SearchResult?ukw=${enc(role)}&rgns=${enc(loc)}`),
+    base("Careerjet", `https://www.careerjet.de/stellenangebote?s=${enc(role)}&l=${enc(loc)}`),
     base(
       "Firmen-Karriereseiten",
       `https://www.google.com/search?q=${enc(`"${role}" ${loc} (Karriere OR Stellenangebot) -site:indeed.com -site:stepstone.de`)}`,
