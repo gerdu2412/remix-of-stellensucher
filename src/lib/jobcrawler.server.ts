@@ -26,7 +26,11 @@ async function getHtml(url: string): Promise<string> {
     headers: {
       "user-agent": UA,
       accept: "text/html,application/xhtml+xml",
-      "accept-language": "de-DE,de;q=0.9,en;q=0.8",
+      "accept-language": "de-DE,de;q=0.9,fr;q=0.8,en;q=0.7",
+      "sec-fetch-dest": "document",
+      "sec-fetch-mode": "navigate",
+      "sec-fetch-site": "none",
+      "upgrade-insecure-requests": "1",
     },
   });
   if (!res.ok) throw new Error(`Antwort ${res.status}`);
