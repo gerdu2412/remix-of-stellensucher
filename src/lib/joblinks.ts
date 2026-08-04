@@ -16,6 +16,11 @@ function slug(value: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+/** Fallback fuer Portale ohne stabile Such-URL: gezielte Websuche innerhalb der Domain. */
+function siteSearch(domain: string, query: string): string {
+  return `https://duckduckgo.com/?q=${enc(`site:${domain} ${query}`)}`;
+}
+
 /** Deep-Links in die grossen Stellenboersen fuer eine Rolle/Region. */
 export function portalSearchLinks(role: string, location: string): PortalLink[] {
   const loc = location || "Deutschland";
@@ -29,7 +34,7 @@ export function portalSearchLinks(role: string, location: string): PortalLink[] 
     base("Adzuna", `https://www.adzuna.de/search?q=${enc(role)}&w=${enc(loc)}`),
     base("Jooble", `https://de.jooble.org/SearchResult?ukw=${enc(role)}&rgns=${enc(loc)}`),
     base("Careerjet", `https://www.careerjet.de/stellenangebote?s=${enc(role)}&l=${enc(loc)}`),
-    base("metajob.de", `https://www.metajob.de/${slug(role)}`),
+    base("metajob.de", siteSearch("metajob.de", `${role} ${loc}`)),
     base("Nomado24", `https://www.nomado24.de/?s=${enc(role)}`),
     base("TheirStack", `https://theirstack.com/en/jobs?q=${enc(role)}`),
     base(
@@ -58,9 +63,9 @@ export function regionalPortalLinks(role: string): PortalLink[] {
     link("StepStone.at", `https://www.stepstone.at/jobs/${slug(role)}`, "Österreich"),
     link("jobs.ch", `https://www.jobs.ch/de/stellenangebote/?term=${enc(role)}`, "Schweiz"),
     link("Job-Room", `https://www.job-room.ch/job-search?query=${enc(role)}`, "Schweiz / Liechtenstein"),
-    link("jobs.li", `https://www.jobs.li/de/jobs?search=${enc(role)}`, "Liechtenstein"),
-    link("Moovijob", `https://www.moovijob.com/de/suche?q=${enc(role)}`, "Luxemburg"),
-    link("jobs.lu", `https://www.jobs.lu/de/jobs?keywords=${enc(role)}`, "Luxemburg"),
-    link("ADEM", `https://adem.public.lu/de/demandeurs-demploi/offres-emploi.html`, "Luxemburg"),
+    link("jobs.li", siteSearch("jobs.li", role), "Liechtenstein"),
+    link("Moovijob", siteSearch("moovijob.com", role), "Luxemburg"),
+    link("jobs.lu", siteSearch("jobs.lu", role), "Luxemburg"),
+    link("ADEM", `https://adem.public.lu/de.html`, "Luxemburg"),
   ];
 }
