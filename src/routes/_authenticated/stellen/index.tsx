@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ExternalLink, Loader2, Plus, RefreshCw, Sparkles, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -80,6 +80,7 @@ export const Route = createFileRoute("/_authenticated/stellen/")({
 });
 
 function StellenPage() {
+  const RUN_STORAGE_KEY = "careerpilot.stellen.lastRun";
   const jobs = useJobs();
   const matches = useMatches();
   const searchProfile = useSearchProfile();
@@ -90,7 +91,7 @@ function StellenPage() {
   const [statusFilter, setStatusFilter] = useState("alle");
   const [query, setQuery] = useState("");
   const [updating, setUpdating] = useState(false);
-  const [run, setRun] = useState<(FeedRun & { imported: number }) | null>(null);
+  const [run, setRunState] = useState<(FeedRun & { imported: number }) | null>(null);
   const [customTerms, setCustomTerms] = useState<string[]>([]);
   const [newTerm, setNewTerm] = useState("");
   const [activeTerms, setActiveTerms] = useState<string[]>(DEFAULT_TERMS);
@@ -98,6 +99,26 @@ function StellenPage() {
   const [newRegion, setNewRegion] = useState("");
   const [fixOpen, setFixOpen] = useState(false);
   const [activeRegions, setActiveRegions] = useState<string[]>(PRIORITY_REGIONS);
+
+  // Letzten Suchlauf lokal speichern, damit die Tabellen bis zur naechsten Aktualisierung erhalten bleiben.
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(RUN_STORAGE_KEY);
+      if (stored) setRunState(JSON.parse(stored) as FeedRun & { imported: number });
+    } catch {
+      /* ignorieren */
+    }
+  }, []);
+
+  function setRun(value: (FeedRun & { imported: number }) | null) {
+    setRunState(value);
+    try {
+      if (value) localStorage.setItem(RUN_STORAGE_KEY, JSON.stringify(value));
+      else localStorage.removeItem(RUN_STORAGE_KEY);
+    } catch {
+      /* ignorieren */
+    }
+  }
 
   const matchByJob = useMemo(
     () => new Map((matches.data ?? []).map((m) => [m.job_posting_id, m])),
@@ -466,8 +487,8 @@ function StellenPage() {
                 <p className="font-display text-sm font-semibold">Durchsuchte Quellen</p>
                 <p className="text-xs font-normal text-muted-foreground">
                   {run
-                    ? `Letzte Aktualisierung: ${new Date(run.ran_at).toLocaleString("de-DE")} · ${run.scanned} Anzeigen durchsucht · ${run.matched} passend · ${run.imported} neu übernommen`
-                    : "Noch keine Aktualisierung in dieser Sitzung – Suche startet mit den Zielrollen und Regionen aus Ihrem Suchprofil."}
+                    ? `Stand: ${new Date(run.ran_at).toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" })} Uhr · gespeichert bis zur nächsten Aktualisierung · ${run.scanned} Anzeigen durchsucht · ${run.matched} passend · ${run.imported} neu übernommen`
+                    : "Noch keine Aktualisierung gespeichert – Suche startet mit den Zielrollen und Regionen aus Ihrem Suchprofil."}
                 </p>
               </div>
             </AccordionTrigger>
