@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { ExternalLink, Loader2, Plus, RefreshCw, Sparkles, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -80,6 +80,7 @@ export const Route = createFileRoute("/_authenticated/stellen/")({
 });
 
 function StellenPage() {
+  const RUN_STORAGE_KEY = "careerpilot.stellen.lastRun";
   const jobs = useJobs();
   const matches = useMatches();
   const searchProfile = useSearchProfile();
