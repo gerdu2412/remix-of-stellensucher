@@ -219,13 +219,14 @@ export async function searchFeeds(input: {
   }
 
   // --- Gehosteter Browser (Playwright-Rendering) fuer JS-lastige Portale ---
+  const browserTargets: { label: string; location: string; role: string; run: () => Promise<CrawlResult> }[] = [];
   if (browserCrawlersEnabled()) {
     // Kreditschonend: nur die ersten Suchbegriffe durch den kostenpflichtigen Browser.
     for (const role of activeRoles.slice(0, 2)) {
-      crawlerTargets.push({ label: "LinkedIn Jobs", location: primaryLocation || "Deutschland", role, run: () => crawlLinkedIn(role, primaryLocation) });
-      crawlerTargets.push({ label: "Indeed", location: primaryLocation || "Deutschland", role, run: () => crawlIndeed(role, primaryLocation) });
-      crawlerTargets.push({ label: "StepStone Deutschland", location: primaryLocation || "Deutschland", role, run: () => crawlStepstoneDe(role, primaryLocation) });
-      crawlerTargets.push({ label: "Xing Jobs", location: primaryLocation || "Deutschland", role, run: () => crawlXing(role, primaryLocation) });
+      browserTargets.push({ label: "LinkedIn Jobs", location: primaryLocation || "Deutschland", role, run: () => crawlLinkedIn(role, primaryLocation) });
+      browserTargets.push({ label: "Indeed", location: primaryLocation || "Deutschland", role, run: () => crawlIndeed(role, primaryLocation) });
+      browserTargets.push({ label: "StepStone Deutschland", location: primaryLocation || "Deutschland", role, run: () => crawlStepstoneDe(role, primaryLocation) });
+      browserTargets.push({ label: "Xing Jobs", location: primaryLocation || "Deutschland", role, run: () => crawlXing(role, primaryLocation) });
     }
   } else {
     sources.push({
@@ -243,7 +244,11 @@ export async function searchFeeds(input: {
 
   // --- Job-Aggregatoren (Adzuna, Jooble, Careerjet, TheirStack, Techmap) ---
   const aggregatorTargets: { label: string; location: string; role: string; run: () => Promise<CrawlResult> }[] = [];
-  for (const role of roles.length ? roles : ["Projektmanager"]) {
+  // TheirStack zuerst (einziger aktiver Key) – damit es nie durch das Limit abgeschnitten wird.
+  for (const role of activeRoles) {
+    aggregatorTargets.push({ label: "TheirStack", location: "DACH / LU / LI", role, run: () => searchTheirStack(role, ["DE", "AT", "CH", "LU", "LI"]) });
+  }
+  for (const role of activeRoles) {
     aggregatorTargets.push({ label: "Adzuna (Deutschland)", location: primaryLocation || "Deutschland", role, run: () => searchAdzuna(role, "de", primaryLocation) });
     aggregatorTargets.push({ label: "Adzuna (Österreich)", location: "Österreich", role, run: () => searchAdzuna(role, "at", "") });
     aggregatorTargets.push({ label: "Adzuna (Schweiz)", location: "Schweiz", role, run: () => searchAdzuna(role, "ch", "") });
@@ -252,7 +257,6 @@ export async function searchFeeds(input: {
     aggregatorTargets.push({ label: "Careerjet (Österreich)", location: "Österreich", role, run: () => searchCareerjet(role, "at", "") });
     aggregatorTargets.push({ label: "Careerjet (Schweiz)", location: "Schweiz", role, run: () => searchCareerjet(role, "ch", "") });
     aggregatorTargets.push({ label: "Careerjet (Luxemburg)", location: "Luxemburg", role, run: () => searchCareerjet(role, "lu", "") });
-    aggregatorTargets.push({ label: "TheirStack", location: "DACH / LU / LI", role, run: () => searchTheirStack(role, ["DE", "AT", "CH", "LU", "LI"]) });
     aggregatorTargets.push({ label: "Techmap (DE)", location: "Deutschland", role, run: () => searchTechmap(role, "de") });
     aggregatorTargets.push({ label: "Techmap (AT)", location: "Österreich", role, run: () => searchTechmap(role, "at") });
     aggregatorTargets.push({ label: "Techmap (CH)", location: "Schweiz", role, run: () => searchTechmap(role, "ch") });
@@ -260,6 +264,8 @@ export async function searchFeeds(input: {
 
   const crawlerRuns = await Promise.all(
     [
+      // Browser-Quellen zuerst: sie duerfen nie durch das Limit entfallen.
+      ...browserTargets.map((target) => ({ target, role: target.role })),
       ...crawlerTargets.slice(0, 60).map((target) => ({ target, role: target.role })),
       ...aggregatorTargets.slice(0, 48).map((target) => ({ target, role: target.role })),
     ].map(async ({ target, role }) => {
