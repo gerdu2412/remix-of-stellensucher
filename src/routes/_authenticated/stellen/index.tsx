@@ -487,8 +487,8 @@ function StellenPage() {
                 <p className="font-display text-sm font-semibold">Durchsuchte Quellen</p>
                 <p className="text-xs font-normal text-muted-foreground">
                   {run
-                    ? `Letzte Aktualisierung: ${new Date(run.ran_at).toLocaleString("de-DE")} · ${run.scanned} Anzeigen durchsucht · ${run.matched} passend · ${run.imported} neu übernommen`
-                    : "Noch keine Aktualisierung in dieser Sitzung – Suche startet mit den Zielrollen und Regionen aus Ihrem Suchprofil."}
+                    ? `Stand: ${new Date(run.ran_at).toLocaleString("de-DE", { dateStyle: "medium", timeStyle: "short" })} Uhr · gespeichert bis zur nächsten Aktualisierung · ${run.scanned} Anzeigen durchsucht · ${run.matched} passend · ${run.imported} neu übernommen`
+                    : "Noch keine Aktualisierung gespeichert – Suche startet mit den Zielrollen und Regionen aus Ihrem Suchprofil."}
                 </p>
               </div>
             </AccordionTrigger>
