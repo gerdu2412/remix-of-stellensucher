@@ -90,7 +90,7 @@ function StellenPage() {
   const [statusFilter, setStatusFilter] = useState("alle");
   const [query, setQuery] = useState("");
   const [updating, setUpdating] = useState(false);
-  const [run, setRun] = useState<(FeedRun & { imported: number }) | null>(null);
+  const [run, setRunState] = useState<(FeedRun & { imported: number }) | null>(null);
   const [customTerms, setCustomTerms] = useState<string[]>([]);
   const [newTerm, setNewTerm] = useState("");
   const [activeTerms, setActiveTerms] = useState<string[]>(DEFAULT_TERMS);
