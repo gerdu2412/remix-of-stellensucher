@@ -99,6 +99,26 @@ function StellenPage() {
   const [fixOpen, setFixOpen] = useState(false);
   const [activeRegions, setActiveRegions] = useState<string[]>(PRIORITY_REGIONS);
 
+  // Letzten Suchlauf lokal speichern, damit die Tabellen bis zur naechsten Aktualisierung erhalten bleiben.
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(RUN_STORAGE_KEY);
+      if (stored) setRunState(JSON.parse(stored) as FeedRun & { imported: number });
+    } catch {
+      /* ignorieren */
+    }
+  }, []);
+
+  function setRun(value: (FeedRun & { imported: number }) | null) {
+    setRunState(value);
+    try {
+      if (value) localStorage.setItem(RUN_STORAGE_KEY, JSON.stringify(value));
+      else localStorage.removeItem(RUN_STORAGE_KEY);
+    } catch {
+      /* ignorieren */
+    }
+  }
+
   const matchByJob = useMemo(
     () => new Map((matches.data ?? []).map((m) => [m.job_posting_id, m])),
     [matches.data],
