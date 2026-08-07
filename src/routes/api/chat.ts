@@ -30,7 +30,16 @@ export const Route = createFileRoute("/api/chat")({
           messages: await convertToModelMessages(messages as UIMessage[]),
         });
 
-        return result.toUIMessageStreamResponse({ originalMessages: messages as UIMessage[] });
+        return result.toUIMessageStreamResponse({
+          originalMessages: messages as UIMessage[],
+          onError: (error) => {
+            const text = error instanceof Error ? error.message : String(error);
+            if (/forbidden|403|credit/i.test(text)) {
+              return "KI-Guthaben aufgebraucht: Das Workspace-Kreditlimit ist erreicht. Bitte Limit erhöhen, dann startet die Interviewsimulation wieder.";
+            }
+            return `KI-Fehler: ${text}`;
+          },
+        });
       },
     },
   },
