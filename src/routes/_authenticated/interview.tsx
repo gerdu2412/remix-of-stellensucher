@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { useSimpleChat } from "@/lib/use-simple-chat";
-import { Loader2, Mic, Send, Square, ExternalLink, Newspaper } from "lucide-react";
+import { Loader2, Mic, Send, Square, ExternalLink, Newspaper, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ import { PageHeader, Panel, SectionTitle } from "@/components/shared/ui-bits";
 import { useJobs, useMasterCv } from "@/lib/queries";
 import { useVoiceInput } from "@/lib/use-voice-input";
 import { companyCareersUrl, companyContextLinks, companyNewsUrl, companyWebsiteUrl } from "@/lib/joblinks";
+import { aiCompanyBriefing } from "@/lib/company.functions";
 
 export const Route = createFileRoute("/_authenticated/interview")({
   head: () => ({
@@ -63,6 +65,16 @@ function InterviewPage() {
     [autoSend, send, setup],
   );
   const voice = useVoiceInput({ onTranscript, onError });
+
+  const briefing = useMutation({
+    mutationFn: async () => {
+      if (!job) throw new Error("Bitte zuerst eine Stelle wählen.");
+      return aiCompanyBriefing({
+        data: { company: job.company ?? "", jobText: `${job.title ?? ""}\n${job.description ?? ""}` },
+      });
+    },
+    onError: (error: unknown) => onError(error instanceof Error ? error.message : "Zusammenfassung fehlgeschlagen"),
+  });
 
   const facts = job
     ? ([
@@ -166,6 +178,75 @@ function InterviewPage() {
                     <ExternalLink className="size-3.5" /> {link.name}
                   </a>
                 ))}
+              </div>
+
+              <div className="space-y-3 border-t border-border pt-3">
+                <div className="flex items-center justify-between gap-2">
+                  <SectionTitle>Zusammenfassung und Einordnung</SectionTitle>
+                  <Button size="sm" variant="outline" onClick={() => briefing.mutate()} disabled={briefing.isPending}>
+                    {briefing.isPending ? (
+                      <Loader2 className="size-3.5 animate-spin" />
+                    ) : (
+                      <Sparkles className="size-3.5" />
+                    )}
+                    {briefing.data ? "Aktualisieren" : "Erstellen"}
+                  </Button>
+                </div>
+
+                {!briefing.data && !briefing.isPending && (
+                  <p className="text-xs text-muted-foreground">
+                    Fasst Nachrichten, Pressemitteilungen und Arbeitgeberbewertungen der letzten sechs Monate zusammen.
+                  </p>
+                )}
+
+                {briefing.data && (
+                  <div className="space-y-3 text-sm">
+                    {(
+                      [
+                        ["Nachrichten", briefing.data.briefing.news_summary],
+                        ["Pressemitteilungen", briefing.data.briefing.press_summary],
+                        ["Bewertungen", briefing.data.briefing.reviews_summary],
+                        ["Einordnung", briefing.data.briefing.assessment],
+                      ] as [string, string][]
+                    )
+                      .filter(([, text]) => text?.trim())
+                      .map(([label, text]) => (
+                        <div key={label}>
+                          <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+                          <p className="whitespace-pre-wrap">{text}</p>
+                        </div>
+                      ))}
+
+                    {briefing.data.briefing.interview_hooks.length > 0 && (
+                      <div>
+                        <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                          Anknüpfungspunkte
+                        </p>
+                        <ul className="list-disc space-y-0.5 pl-4">
+                          {briefing.data.briefing.interview_hooks.map((hook) => (
+                            <li key={hook}>{hook}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {briefing.data.sources.length > 0 && (
+                      <details className="text-xs text-muted-foreground">
+                        <summary className="cursor-pointer">Quellen ({briefing.data.sources.length})</summary>
+                        <ul className="mt-1 space-y-1">
+                          {briefing.data.sources.map((source) => (
+                            <li key={source.url}>
+                              <a href={source.url} target="_blank" rel="noreferrer" className="text-primary underline">
+                                {source.title}
+                              </a>
+                              {source.source ? ` · ${source.source}` : ""}
+                            </li>
+                          ))}
+                        </ul>
+                      </details>
+                    )}
+                  </div>
+                )}
               </div>
             </Panel>
           </div>

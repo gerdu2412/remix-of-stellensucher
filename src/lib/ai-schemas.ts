@@ -174,3 +174,11 @@ export const jobSchema = z.object({
   contact_person: str(),
   description: str(),
 });
+export const companyBriefingSchema = z.object({
+  news_summary: str(),
+  press_summary: str(),
+  reviews_summary: str(),
+  assessment: str(),
+  highlights: list(str()),
+  interview_hooks: list(str()),
+});
