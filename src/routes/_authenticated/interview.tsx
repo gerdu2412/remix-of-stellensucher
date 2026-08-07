@@ -76,6 +76,36 @@ function InterviewPage() {
   const onError = useCallback((message: string) => toast.error(message), []);
   const { messages, send, isLoading } = useSimpleChat(onError);
 
+  const lastAssistant = [...messages].reverse().find((m) => m.role !== "user");
+  useEffect(() => {
+    if (!speechOn || isLoading || !lastAssistant?.text?.trim()) return;
+    if (spokenRef.current.has(lastAssistant.id)) return;
+    spokenRef.current.add(lastAssistant.id);
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/speak", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: lastAssistant.text }),
+        });
+        if (!res.ok) throw new Error(await res.text().catch(() => "Sprachausgabe fehlgeschlagen"));
+        const url = URL.createObjectURL(await res.blob());
+        if (cancelled) return;
+        audioRef.current?.pause();
+        const audio = new Audio(url);
+        audioRef.current = audio;
+        audio.onended = () => URL.revokeObjectURL(url);
+        await audio.play().catch(() => undefined);
+      } catch (error) {
+        onError(error instanceof Error ? error.message : "Sprachausgabe fehlgeschlagen");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [speechOn, isLoading, lastAssistant?.id, lastAssistant?.text, onError]);
+
   function submit(text: string) {
     if (!text.trim()) return;
     void send(text, setup);
