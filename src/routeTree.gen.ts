@@ -21,6 +21,7 @@ import { Route as AuthenticatedLebenslaufRouteImport } from './routes/_authentic
 import { Route as AuthenticatedMatchRouteImport } from './routes/_authenticated/match'
 import { Route as AuthenticatedProfilRouteImport } from './routes/_authenticated/profil'
 import { Route as ApiChatRouteImport } from './routes/api/chat'
+import { Route as ApiTranscribeRouteImport } from './routes/api/transcribe'
 import { Route as AuthenticatedStellenIndexRouteImport } from './routes/_authenticated/stellen/index'
 import { Route as AuthenticatedStellenJobIdRouteImport } from './routes/_authenticated/stellen/$jobId'
 
@@ -85,6 +86,11 @@ const ApiChatRoute = ApiChatRouteImport.update({
   path: '/api/chat',
   getParentRoute: () => rootRouteImport,
 } as any)
+const ApiTranscribeRoute = ApiTranscribeRouteImport.update({
+  id: '/api/transcribe',
+  path: '/api/transcribe',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AuthenticatedStellenIndexRoute =
   AuthenticatedStellenIndexRouteImport.update({
     id: '/stellen/',
@@ -110,6 +116,7 @@ export interface FileRoutesByFullPath {
   '/match': typeof AuthenticatedMatchRoute
   '/profil': typeof AuthenticatedProfilRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/transcribe': typeof ApiTranscribeRoute
   '/stellen/$jobId': typeof AuthenticatedStellenJobIdRoute
   '/stellen/': typeof AuthenticatedStellenIndexRoute
 }
@@ -125,6 +132,7 @@ export interface FileRoutesByTo {
   '/match': typeof AuthenticatedMatchRoute
   '/profil': typeof AuthenticatedProfilRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/transcribe': typeof ApiTranscribeRoute
   '/stellen/$jobId': typeof AuthenticatedStellenJobIdRoute
   '/stellen': typeof AuthenticatedStellenIndexRoute
 }
@@ -142,6 +150,7 @@ export interface FileRoutesById {
   '/_authenticated/match': typeof AuthenticatedMatchRoute
   '/_authenticated/profil': typeof AuthenticatedProfilRoute
   '/api/chat': typeof ApiChatRoute
+  '/api/transcribe': typeof ApiTranscribeRoute
   '/_authenticated/stellen/$jobId': typeof AuthenticatedStellenJobIdRoute
   '/_authenticated/stellen/': typeof AuthenticatedStellenIndexRoute
 }
@@ -159,6 +168,7 @@ export interface FileRouteTypes {
     | '/match'
     | '/profil'
     | '/api/chat'
+    | '/api/transcribe'
     | '/stellen/$jobId'
     | '/stellen/'
   fileRoutesByTo: FileRoutesByTo
@@ -174,6 +184,7 @@ export interface FileRouteTypes {
     | '/match'
     | '/profil'
     | '/api/chat'
+    | '/api/transcribe'
     | '/stellen/$jobId'
     | '/stellen'
   id:
@@ -190,6 +201,7 @@ export interface FileRouteTypes {
     | '/_authenticated/match'
     | '/_authenticated/profil'
     | '/api/chat'
+    | '/api/transcribe'
     | '/_authenticated/stellen/$jobId'
     | '/_authenticated/stellen/'
   fileRoutesById: FileRoutesById
@@ -199,6 +211,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   ApiChatRoute: typeof ApiChatRoute
+  ApiTranscribeRoute: typeof ApiTranscribeRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -287,6 +300,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/api/transcribe': {
+      id: '/api/transcribe'
+      path: '/api/transcribe'
+      fullPath: '/api/transcribe'
+      preLoaderRoute: typeof ApiTranscribeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/_authenticated/stellen/': {
       id: '/_authenticated/stellen/'
       path: '/stellen'
@@ -338,6 +358,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   ApiChatRoute: ApiChatRoute,
+  ApiTranscribeRoute: ApiTranscribeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
