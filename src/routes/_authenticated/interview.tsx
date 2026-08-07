@@ -1,8 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useSimpleChat } from "@/lib/use-simple-chat";
-import { Loader2, Mic, Send, Square, ExternalLink, Newspaper, Sparkles } from "lucide-react";
+import { Loader2, Mic, Send, Square, ExternalLink, Newspaper, Sparkles, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,12 +40,71 @@ function InterviewPage() {
   const [type, setType] = useState("hr");
   const [input, setInput] = useState("");
   const [autoSend, setAutoSend] = useState(true);
+  const SPEECH_STORAGE_KEY = "careerpilot.interview.speech";
+  const [speechOn, setSpeechOn] = useState(true);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const spokenRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(SPEECH_STORAGE_KEY);
+      if (stored !== null) setSpeechOn(stored === "1");
+    } catch {
+      /* ignorieren */
+    }
+  }, []);
+
+  function stopSpeech() {
+    audioRef.current?.pause();
+    audioRef.current = null;
+  }
+
+  function toggleSpeech() {
+    const next = !speechOn;
+    setSpeechOn(next);
+    if (!next) stopSpeech();
+    try {
+      localStorage.setItem(SPEECH_STORAGE_KEY, next ? "1" : "0");
+    } catch {
+      /* ignorieren */
+    }
+  }
 
   const job = (jobs.data ?? []).find((j) => j.id === jobId);
   const setup = `Interviewtyp: ${type}. Stelle: ${job ? `${job.title} bei ${job.company}\n${job.description ?? ""}` : "allgemein"}.\nLebenslauf der Kandidatin oder des Kandidaten:\n${cv.data?.extracted_text ?? "(nicht hinterlegt)"}`;
 
   const onError = useCallback((message: string) => toast.error(message), []);
   const { messages, send, isLoading } = useSimpleChat(onError);
+
+  const lastAssistant = [...messages].reverse().find((m) => m.role !== "user");
+  useEffect(() => {
+    if (!speechOn || isLoading || !lastAssistant?.text?.trim()) return;
+    if (spokenRef.current.has(lastAssistant.id)) return;
+    spokenRef.current.add(lastAssistant.id);
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch("/api/speak", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ text: lastAssistant.text }),
+        });
+        if (!res.ok) throw new Error(await res.text().catch(() => "Sprachausgabe fehlgeschlagen"));
+        const url = URL.createObjectURL(await res.blob());
+        if (cancelled) return;
+        audioRef.current?.pause();
+        const audio = new Audio(url);
+        audioRef.current = audio;
+        audio.onended = () => URL.revokeObjectURL(url);
+        await audio.play().catch(() => undefined);
+      } catch (error) {
+        onError(error instanceof Error ? error.message : "Sprachausgabe fehlgeschlagen");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [speechOn, isLoading, lastAssistant?.id, lastAssistant?.text, onError]);
 
   function submit(text: string) {
     if (!text.trim()) return;
@@ -305,6 +364,16 @@ function InterviewPage() {
               <input type="checkbox" checked={autoSend} onChange={(e) => setAutoSend(e.target.checked)} />
               Gesprochene Antwort direkt senden
             </label>
+          </div>
+          <div className="space-y-2 border-t border-border pt-3">
+            <SectionTitle>Sprachausgabe</SectionTitle>
+            <Button variant={speechOn ? "default" : "outline"} className="w-full" onClick={toggleSpeech}>
+              {speechOn ? <Volume2 className="mr-2 size-4" /> : <VolumeX className="mr-2 size-4" />}
+              {speechOn ? "Fragen werden vorgelesen" : "Sprache deaktiviert"}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Fragen und Feedback werden akustisch ausgegeben. Über den Button lässt sich die Sprache abschalten.
+            </p>
           </div>
         </Panel>
 
