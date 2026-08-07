@@ -109,6 +109,41 @@ function StellenPage() {
   const [sourceOpen, setSourceOpen] = useState(false);
   const [sourceLabel, setSourceLabel] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
+  const CRITERIA_STORAGE_KEY = "careerpilot.stellen.criteria";
+  const [criteriaLoaded, setCriteriaLoaded] = useState(false);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(CRITERIA_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored) as {
+          activeTerms?: string[];
+          customTerms?: string[];
+          activeRegions?: string[];
+          customRegions?: string[];
+        };
+        if (Array.isArray(parsed.activeTerms)) setActiveTerms(parsed.activeTerms);
+        if (Array.isArray(parsed.customTerms)) setCustomTerms(parsed.customTerms);
+        if (Array.isArray(parsed.activeRegions)) setActiveRegions(parsed.activeRegions);
+        if (Array.isArray(parsed.customRegions)) setCustomRegions(parsed.customRegions);
+      }
+    } catch {
+      /* ignorieren */
+    }
+    setCriteriaLoaded(true);
+  }, []);
+
+  useEffect(() => {
+    if (!criteriaLoaded) return;
+    try {
+      localStorage.setItem(
+        CRITERIA_STORAGE_KEY,
+        JSON.stringify({ activeTerms, customTerms, activeRegions, customRegions }),
+      );
+    } catch {
+      /* ignorieren */
+    }
+  }, [criteriaLoaded, activeTerms, customTerms, activeRegions, customRegions]);
 
   useEffect(() => {
     try {
