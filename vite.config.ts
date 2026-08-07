@@ -12,9 +12,4 @@ export default defineConfig({
     // nitro/vite builds from this
     server: { entry: "server" },
   },
-  vite: {
-    optimizeDeps: {
-      include: ["zod", "zod/v4", "zod/v4/core", "ai", "@ai-sdk/react", "@ai-sdk/provider-utils"],
-    },
-  },
 });
