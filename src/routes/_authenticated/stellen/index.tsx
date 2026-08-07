@@ -28,6 +28,7 @@ import {
 import { aiStructureJob } from "@/lib/ai.functions";
 import { BulkMatchButton } from "@/components/shared/bulk-match";
 import { searchJobFeeds } from "@/lib/jobsearch.functions";
+import { DEFAULT_ACTIVE_PROVIDERS, JOB_PROVIDERS, PROVIDER_GROUP_LABEL, type ProviderGroup } from "@/lib/jobproviders";
 import { companyCareersUrl, companyWebsiteUrl, portalSearchLinks } from "@/lib/joblinks";
 import { useInsertRow, useJobs, useMatches, useSearchProfile } from "@/lib/queries";
 
@@ -99,6 +100,32 @@ function StellenPage() {
   const [newRegion, setNewRegion] = useState("");
   const [fixOpen, setFixOpen] = useState(false);
   const [activeRegions, setActiveRegions] = useState<string[]>(PRIORITY_REGIONS);
+  const PROVIDER_STORAGE_KEY = "careerpilot.stellen.providers";
+  const [activeProviders, setActiveProvidersState] = useState<string[]>(DEFAULT_ACTIVE_PROVIDERS);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(PROVIDER_STORAGE_KEY);
+      if (stored) setActiveProvidersState(JSON.parse(stored) as string[]);
+    } catch {
+      /* ignorieren */
+    }
+  }, []);
+
+  function setActiveProviders(next: string[]) {
+    setActiveProvidersState(next);
+    try {
+      localStorage.setItem(PROVIDER_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      /* ignorieren */
+    }
+  }
+
+  function toggleProvider(id: string) {
+    setActiveProviders(
+      activeProviders.includes(id) ? activeProviders.filter((p) => p !== id) : [...activeProviders, id],
+    );
+  }
 
   // Letzten Suchlauf lokal speichern, damit die Tabellen bis zur naechsten Aktualisierung erhalten bleiben.
   useEffect(() => {
@@ -312,6 +339,7 @@ function StellenPage() {
           locations: searchLocations.length ? searchLocations : (profile?.regions ?? []),
           excluded: profile?.excluded_industries ?? [],
           perQuery: 25,
+          providers: activeProviders,
         },
       });
 
@@ -479,6 +507,73 @@ function StellenPage() {
                   </Button>
                 </div>
               </AccordionContent>
+          </AccordionItem>
+
+          <AccordionItem value="apis" className="border-0 border-b border-border">
+            <AccordionTrigger className="py-3 hover:no-underline">
+              <div className="text-left">
+                <p className="font-display text-sm font-semibold">Quellen und APIs aktivieren</p>
+                <p className="text-xs font-normal text-muted-foreground">
+                  {activeProviders.length} von {JOB_PROVIDERS.length} Quellen aktiv
+                </p>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pt-2">
+              <div className="mb-3 flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setActiveProviders(DEFAULT_ACTIVE_PROVIDERS)}
+                >
+                  Alle aktivieren
+                </Button>
+                <Button type="button" size="sm" variant="outline" onClick={() => setActiveProviders([])}>
+                  Alle deaktivieren
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    setActiveProviders(JOB_PROVIDERS.filter((p) => !p.needsKey).map((p) => p.id))
+                  }
+                >
+                  Nur kostenlose Quellen
+                </Button>
+              </div>
+              <div className="space-y-4">
+                {(["amtlich", "crawler", "browser", "aggregator"] as ProviderGroup[]).map((group) => (
+                  <div key={group}>
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      {PROVIDER_GROUP_LABEL[group]}
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {JOB_PROVIDERS.filter((p) => p.group === group).map((p) => {
+                        const active = activeProviders.includes(p.id);
+                        return (
+                          <Button
+                            key={p.id}
+                            type="button"
+                            size="sm"
+                            variant={active ? "default" : "outline"}
+                            onClick={() => toggleProvider(p.id)}
+                            aria-pressed={active}
+                          >
+                            {p.label}
+                            <span className="ml-2 text-xs opacity-70">{active ? "aktiv" : "aus"}</span>
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Quellen mit Schlüsselbedarf laufen nur, wenn der passende API-Schlüssel hinterlegt ist. Die Auswahl wird
+                lokal gespeichert und gilt für die nächste Suche.
+              </p>
+            </AccordionContent>
           </AccordionItem>
 
           <AccordionItem value="quellen" className="border-0">
