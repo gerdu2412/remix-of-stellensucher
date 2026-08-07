@@ -10,6 +10,9 @@ export const searchJobFeeds = createServerFn({ method: "POST" })
         excluded: z.array(z.string()).default([]),
         perQuery: z.number().min(5).max(50).default(25),
         providers: z.array(z.string()).optional(),
+        customSources: z
+          .array(z.object({ id: z.string(), label: z.string(), url: z.string() }))
+          .optional(),
       })
       .parse(input ?? {}),
   )
