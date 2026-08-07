@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { convertToModelMessages, streamText, type UIMessage } from "ai";
-import { createLovableAiGatewayProvider, DEFAULT_MODEL } from "@/lib/ai-gateway.server";
+import { createChatModel } from "@/lib/ai-gateway.server";
 
 type ChatRequestBody = { messages?: unknown; setup?: string };
 
@@ -12,12 +12,11 @@ export const Route = createFileRoute("/api/chat")({
         if (!Array.isArray(messages)) {
           return new Response("Messages are required", { status: 400 });
         }
-        const key = process.env["LOVABLE_API_KEY"];
+        const key = process.env["OPENAI_API_KEY"] ?? process.env["LOVABLE_API_KEY"];
         if (!key) return new Response("KI-Dienst ist nicht konfiguriert", { status: 500 });
 
-        const gateway = createLovableAiGatewayProvider(key);
         const result = streamText({
-          model: gateway(DEFAULT_MODEL),
+          model: createChatModel(),
           system:
             "Du führst eine realistische Interviewsimulation für erfahrene Fach- und Führungskräfte durch. " +
             "Stelle immer genau eine Frage und warte auf die Antwort. " +
