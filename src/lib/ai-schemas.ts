@@ -144,6 +144,35 @@ export const starSchema = z.object({
   relevance: str(),
 });
 
+export const tailoredCvSchema = z.object({
+  headline: str(),
+  profile: str(),
+  key_skills: list(str()),
+  experience: list(
+    z.object({
+      company: str(),
+      role: str(),
+      period: str(),
+      highlights: list(str()),
+    }),
+  ),
+  education: list(z.object({ degree: str(), institution: str(), year: str() })),
+  certificates: list(str()),
+  languages: list(str()),
+  adjustments: list(str()),
+});
+
+const starSchemaLegacy = z.object({
+  title: str(),
+  situation: str(),
+  task: str(),
+  action: str(),
+  result: str(),
+  learning: str(),
+  relevance: str(),
+});
+void starSchemaLegacy;
+
 export const jobSchema = z.object({
   title: str(),
   company: str(),
