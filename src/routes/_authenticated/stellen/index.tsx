@@ -34,6 +34,8 @@ import { useInsertRow, useJobs, useMatches, useSearchProfile } from "@/lib/queri
 
 type FeedRun = Awaited<ReturnType<typeof searchJobFeeds>>;
 
+type CustomSource = { id: string; label: string; url: string; enabled: boolean };
+
 const DEFAULT_TERMS = [
   "Strategieentwicklung",
   "Unternehmensentwicklung",
