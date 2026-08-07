@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useMemo, useState } from "react";
-import { ExternalLink, Loader2, Plus, RefreshCw, Sparkles, Wrench } from "lucide-react";
+import { ExternalLink, Loader2, Plus, RefreshCw, Sparkles, Trash2, Wrench } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -102,6 +102,58 @@ function StellenPage() {
   const [activeRegions, setActiveRegions] = useState<string[]>(PRIORITY_REGIONS);
   const PROVIDER_STORAGE_KEY = "careerpilot.stellen.providers";
   const [activeProviders, setActiveProvidersState] = useState<string[]>(DEFAULT_ACTIVE_PROVIDERS);
+  const CUSTOM_SOURCE_STORAGE_KEY = "careerpilot.stellen.customSources";
+  const [customSources, setCustomSourcesState] = useState<CustomSource[]>([]);
+  const [sourceOpen, setSourceOpen] = useState(false);
+  const [sourceLabel, setSourceLabel] = useState("");
+  const [sourceUrl, setSourceUrl] = useState("");
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(CUSTOM_SOURCE_STORAGE_KEY);
+      if (stored) setCustomSourcesState(JSON.parse(stored) as CustomSource[]);
+    } catch {
+      /* ignorieren */
+    }
+  }, []);
+
+  function setCustomSources(next: CustomSource[]) {
+    setCustomSourcesState(next);
+    try {
+      localStorage.setItem(CUSTOM_SOURCE_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      /* ignorieren */
+    }
+  }
+
+  function addCustomSource() {
+    const label = sourceLabel.trim();
+    const url = sourceUrl.trim();
+    if (!label || !/^https?:\/\//i.test(url)) {
+      toast.error("Bitte Name und vollständige URL (mit https://) angeben.");
+      return;
+    }
+    if (customSources.some((s) => s.url === url)) {
+      toast.error("Diese Quelle ist bereits gespeichert.");
+      return;
+    }
+    setCustomSources([
+      ...customSources,
+      { id: `custom-${Date.now()}`, label, url, enabled: true },
+    ]);
+    setSourceLabel("");
+    setSourceUrl("");
+    setSourceOpen(false);
+    toast.success("Quelle gespeichert – sie wird bei jeder Suche durchsucht.");
+  }
+
+  function toggleCustomSource(id: string) {
+    setCustomSources(customSources.map((s) => (s.id === id ? { ...s, enabled: !s.enabled } : s)));
+  }
+
+  function removeCustomSource(id: string) {
+    setCustomSources(customSources.filter((s) => s.id !== id));
+  }
 
   useEffect(() => {
     try {
