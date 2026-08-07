@@ -122,7 +122,7 @@ export async function searchFeeds(input: {
   locations: string[];
   excluded: string[];
   perQuery: number;
-  providers?: string[];
+  providers?: string[] | undefined;
 }): Promise<FeedSearchResult> {
   const enabled = (id: string) => !input.providers || input.providers.includes(id);
   const roles = input.roles.filter(Boolean).slice(0, 16);
@@ -211,26 +211,27 @@ export async function searchFeeds(input: {
   // --- Crawler: DACH, Liechtenstein, Luxemburg, Meta-Portale ---
   const crawlerTargets: { label: string; location: string; role: string; run: () => Promise<CrawlResult> }[] = [];
   for (const role of activeRoles) {
-    crawlerTargets.push({ label: "StepStone Österreich", location: "Österreich", role, run: () => crawlStepstoneAt(role, "") });
-    crawlerTargets.push({ label: "jobs.ch", location: "Schweiz", role, run: () => crawlJobsCh(role, "") });
-    crawlerTargets.push({ label: "Job-Room (CH/LI)", location: "Schweiz / Liechtenstein", role, run: () => crawlJobRoom(role) });
-    crawlerTargets.push({ label: "jobs.ch", location: "Liechtenstein", role, run: () => crawlJobsCh(role, "Liechtenstein") });
-    crawlerTargets.push({ label: "Moovijob (LU)", location: "Luxemburg", role, run: () => crawlMoovijob(role) });
-    crawlerTargets.push({ label: "Nomado24", location: "Remote / Deutschland", role, run: () => crawlNomado24(role) });
-    crawlerTargets.push({ label: "metajob.de", location: primaryLocation || "Deutschland", role, run: () => crawlMetajob(role, primaryLocation) });
+    if (enabled("stepstone-at")) crawlerTargets.push({ label: "StepStone Österreich", location: "Österreich", role, run: () => crawlStepstoneAt(role, "") });
+    if (enabled("jobs-ch")) crawlerTargets.push({ label: "jobs.ch", location: "Schweiz", role, run: () => crawlJobsCh(role, "") });
+    if (enabled("job-room")) crawlerTargets.push({ label: "Job-Room (CH/LI)", location: "Schweiz / Liechtenstein", role, run: () => crawlJobRoom(role) });
+    if (enabled("jobs-ch")) crawlerTargets.push({ label: "jobs.ch", location: "Liechtenstein", role, run: () => crawlJobsCh(role, "Liechtenstein") });
+    if (enabled("moovijob")) crawlerTargets.push({ label: "Moovijob (LU)", location: "Luxemburg", role, run: () => crawlMoovijob(role) });
+    if (enabled("nomado24")) crawlerTargets.push({ label: "Nomado24", location: "Remote / Deutschland", role, run: () => crawlNomado24(role) });
+    if (enabled("metajob")) crawlerTargets.push({ label: "metajob.de", location: primaryLocation || "Deutschland", role, run: () => crawlMetajob(role, primaryLocation) });
   }
 
   // --- Gehosteter Browser (Playwright-Rendering) fuer JS-lastige Portale ---
   const browserTargets: { label: string; location: string; role: string; run: () => Promise<CrawlResult> }[] = [];
-  if (browserCrawlersEnabled()) {
+  const anyBrowser = ["linkedin", "indeed", "stepstone-de", "xing"].some(enabled);
+  if (browserCrawlersEnabled() && anyBrowser) {
     // Kreditschonend: nur die ersten Suchbegriffe durch den kostenpflichtigen Browser.
     for (const role of activeRoles.slice(0, 2)) {
-      browserTargets.push({ label: "LinkedIn Jobs", location: primaryLocation || "Deutschland", role, run: () => crawlLinkedIn(role, primaryLocation) });
-      browserTargets.push({ label: "Indeed", location: primaryLocation || "Deutschland", role, run: () => crawlIndeed(role, primaryLocation) });
-      browserTargets.push({ label: "StepStone Deutschland", location: primaryLocation || "Deutschland", role, run: () => crawlStepstoneDe(role, primaryLocation) });
-      browserTargets.push({ label: "Xing Jobs", location: primaryLocation || "Deutschland", role, run: () => crawlXing(role, primaryLocation) });
+      if (enabled("linkedin")) browserTargets.push({ label: "LinkedIn Jobs", location: primaryLocation || "Deutschland", role, run: () => crawlLinkedIn(role, primaryLocation) });
+      if (enabled("indeed")) browserTargets.push({ label: "Indeed", location: primaryLocation || "Deutschland", role, run: () => crawlIndeed(role, primaryLocation) });
+      if (enabled("stepstone-de")) browserTargets.push({ label: "StepStone Deutschland", location: primaryLocation || "Deutschland", role, run: () => crawlStepstoneDe(role, primaryLocation) });
+      if (enabled("xing")) browserTargets.push({ label: "Xing Jobs", location: primaryLocation || "Deutschland", role, run: () => crawlXing(role, primaryLocation) });
     }
-  } else {
+  } else if (anyBrowser) {
     sources.push({
       source: `Browser-Rendering (${renderProviderLabel()})`,
       query: activeRoles[0] ?? "",
@@ -247,21 +248,27 @@ export async function searchFeeds(input: {
   // --- Job-Aggregatoren (Adzuna, Jooble, Careerjet, TheirStack, Techmap) ---
   const aggregatorTargets: { label: string; location: string; role: string; run: () => Promise<CrawlResult> }[] = [];
   // TheirStack zuerst (einziger aktiver Key) – damit es nie durch das Limit abgeschnitten wird.
-  for (const role of activeRoles) {
+  for (const role of enabled("theirstack") ? activeRoles : []) {
     aggregatorTargets.push({ label: "TheirStack", location: "DACH / LU / LI", role, run: () => searchTheirStack(role, ["DE", "AT", "CH", "LU", "LI"]) });
   }
   for (const role of activeRoles) {
-    aggregatorTargets.push({ label: "Adzuna (Deutschland)", location: primaryLocation || "Deutschland", role, run: () => searchAdzuna(role, "de", primaryLocation) });
-    aggregatorTargets.push({ label: "Adzuna (Österreich)", location: "Österreich", role, run: () => searchAdzuna(role, "at", "") });
-    aggregatorTargets.push({ label: "Adzuna (Schweiz)", location: "Schweiz", role, run: () => searchAdzuna(role, "ch", "") });
-    aggregatorTargets.push({ label: "Jooble", location: primaryLocation || "Deutschland", role, run: () => searchJooble(role, primaryLocation) });
-    aggregatorTargets.push({ label: "Careerjet (Deutschland)", location: primaryLocation || "Deutschland", role, run: () => searchCareerjet(role, "de", primaryLocation) });
-    aggregatorTargets.push({ label: "Careerjet (Österreich)", location: "Österreich", role, run: () => searchCareerjet(role, "at", "") });
-    aggregatorTargets.push({ label: "Careerjet (Schweiz)", location: "Schweiz", role, run: () => searchCareerjet(role, "ch", "") });
-    aggregatorTargets.push({ label: "Careerjet (Luxemburg)", location: "Luxemburg", role, run: () => searchCareerjet(role, "lu", "") });
-    aggregatorTargets.push({ label: "Techmap (DE)", location: "Deutschland", role, run: () => searchTechmap(role, "de") });
-    aggregatorTargets.push({ label: "Techmap (AT)", location: "Österreich", role, run: () => searchTechmap(role, "at") });
-    aggregatorTargets.push({ label: "Techmap (CH)", location: "Schweiz", role, run: () => searchTechmap(role, "ch") });
+    if (enabled("adzuna")) {
+      aggregatorTargets.push({ label: "Adzuna (Deutschland)", location: primaryLocation || "Deutschland", role, run: () => searchAdzuna(role, "de", primaryLocation) });
+      aggregatorTargets.push({ label: "Adzuna (Österreich)", location: "Österreich", role, run: () => searchAdzuna(role, "at", "") });
+      aggregatorTargets.push({ label: "Adzuna (Schweiz)", location: "Schweiz", role, run: () => searchAdzuna(role, "ch", "") });
+    }
+    if (enabled("jooble")) aggregatorTargets.push({ label: "Jooble", location: primaryLocation || "Deutschland", role, run: () => searchJooble(role, primaryLocation) });
+    if (enabled("careerjet")) {
+      aggregatorTargets.push({ label: "Careerjet (Deutschland)", location: primaryLocation || "Deutschland", role, run: () => searchCareerjet(role, "de", primaryLocation) });
+      aggregatorTargets.push({ label: "Careerjet (Österreich)", location: "Österreich", role, run: () => searchCareerjet(role, "at", "") });
+      aggregatorTargets.push({ label: "Careerjet (Schweiz)", location: "Schweiz", role, run: () => searchCareerjet(role, "ch", "") });
+      aggregatorTargets.push({ label: "Careerjet (Luxemburg)", location: "Luxemburg", role, run: () => searchCareerjet(role, "lu", "") });
+    }
+    if (enabled("techmap")) {
+      aggregatorTargets.push({ label: "Techmap (DE)", location: "Deutschland", role, run: () => searchTechmap(role, "de") });
+      aggregatorTargets.push({ label: "Techmap (AT)", location: "Österreich", role, run: () => searchTechmap(role, "at") });
+      aggregatorTargets.push({ label: "Techmap (CH)", location: "Schweiz", role, run: () => searchTechmap(role, "ch") });
+    }
   }
 
   const crawlerRuns = await Promise.all(
