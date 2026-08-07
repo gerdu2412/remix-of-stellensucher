@@ -1,7 +1,8 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
+import { useMutation } from "@tanstack/react-query";
 import { useSimpleChat } from "@/lib/use-simple-chat";
-import { Loader2, Mic, Send, Square, ExternalLink, Newspaper } from "lucide-react";
+import { Loader2, Mic, Send, Square, ExternalLink, Newspaper, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,6 +11,7 @@ import { PageHeader, Panel, SectionTitle } from "@/components/shared/ui-bits";
 import { useJobs, useMasterCv } from "@/lib/queries";
 import { useVoiceInput } from "@/lib/use-voice-input";
 import { companyCareersUrl, companyContextLinks, companyNewsUrl, companyWebsiteUrl } from "@/lib/joblinks";
+import { aiCompanyBriefing } from "@/lib/company.functions";
 
 export const Route = createFileRoute("/_authenticated/interview")({
   head: () => ({
@@ -63,6 +65,16 @@ function InterviewPage() {
     [autoSend, send, setup],
   );
   const voice = useVoiceInput({ onTranscript, onError });
+
+  const briefing = useMutation({
+    mutationFn: async () => {
+      if (!job) throw new Error("Bitte zuerst eine Stelle wählen.");
+      return aiCompanyBriefing({
+        data: { company: job.company ?? "", jobText: `${job.title ?? ""}\n${job.description ?? ""}` },
+      });
+    },
+    onError: (error: unknown) => onError(error instanceof Error ? error.message : "Zusammenfassung fehlgeschlagen"),
+  });
 
   const facts = job
     ? ([
