@@ -9,6 +9,7 @@ import {
   questionsSchema,
   starSchema,
   strategySchema,
+  tailoredCvSchema,
 } from "./ai-schemas";
 
 export const aiAnalyzeCv = createServerFn({ method: "POST" })
