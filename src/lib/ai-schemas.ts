@@ -82,8 +82,6 @@ export const coverLetterSchema = z.object({
 export const companySchema = z.object({
   dossier: z.object({
     profile: str(),
-  dossier: z.object({
-    profile: str(),
     business_model: str(),
     market: str(),
     competitors: str(),
