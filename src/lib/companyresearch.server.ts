@@ -15,7 +15,7 @@ function decode(value: string): string {
 
 function pick(block: string, tag: string): string {
   const match = block.match(new RegExp(`<${tag}[^>]*>([\\s\\S]*?)</${tag}>`, "i"));
-  return match ? decode(match[1]) : "";
+  return match?.[1] ? decode(match[1]) : "";
 }
 
 async function fetchFeed(query: string, limit: number): Promise<FeedItem[]> {
