@@ -4,8 +4,12 @@ export const Route = createFileRoute("/api/transcribe")({
   server: {
     handlers: {
       POST: async ({ request }) => {
-        const key = process.env["LOVABLE_API_KEY"];
+        const openAiKey = process.env["OPENAI_API_KEY"];
+        const key = openAiKey ?? process.env["LOVABLE_API_KEY"];
         if (!key) return new Response("KI-Dienst ist nicht konfiguriert", { status: 500 });
+        const endpoint = openAiKey
+          ? "https://api.openai.com/v1/audio/transcriptions"
+          : "https://ai.gateway.lovable.dev/v1/audio/transcriptions";
 
         const form = await request.formData();
         const file = form.get("file");
@@ -17,10 +21,10 @@ export const Route = createFileRoute("/api/transcribe")({
         }
 
         const upstream = new FormData();
-        upstream.append("model", "openai/gpt-4o-mini-transcribe");
+        upstream.append("model", openAiKey ? "gpt-4o-mini-transcribe" : "openai/gpt-4o-mini-transcribe");
         upstream.append("file", file, "recording.wav");
 
-        const response = await fetch("https://ai.gateway.lovable.dev/v1/audio/transcriptions", {
+        const response = await fetch(endpoint, {
           method: "POST",
           headers: { Authorization: `Bearer ${key}` },
           body: upstream,
