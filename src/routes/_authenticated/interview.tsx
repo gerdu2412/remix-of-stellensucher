@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useSimpleChat } from "@/lib/use-simple-chat";
 import { Loader2, Mic, Send, Square, ExternalLink, Newspaper, Sparkles, Volume2, VolumeX } from "lucide-react";
