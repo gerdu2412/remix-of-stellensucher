@@ -510,6 +510,10 @@ function StellenPage() {
           </AccordionItem>
 
           <AccordionItem value="quellen" className="border-0">
+            <AccordionTrigger className="py-1 hover:no-underline" />
+          </AccordionItem>
+        </Accordion>
+      </Panel>
             <AccordionTrigger className="py-1 hover:no-underline">
               <div className="text-left">
                 <p className="font-display text-sm font-semibold">Durchsuchte Quellen</p>
