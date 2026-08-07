@@ -162,17 +162,6 @@ export const tailoredCvSchema = z.object({
   adjustments: list(str()),
 });
 
-const starSchemaLegacy = z.object({
-  title: str(),
-  situation: str(),
-  task: str(),
-  action: str(),
-  result: str(),
-  learning: str(),
-  relevance: str(),
-});
-void starSchemaLegacy;
-
 export const jobSchema = z.object({
   title: str(),
   company: str(),
