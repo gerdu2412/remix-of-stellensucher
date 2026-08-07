@@ -118,6 +118,7 @@ function JobDetail() {
   const matchData = match.data;
   const dossier = (company.data?.dossier ?? {}) as Record<string, string>;
   const coverLetter = documents.data?.find((d) => d.document_type === "anschreiben");
+  const tailoredCv = documents.data?.find((d) => d.document_type === "lebenslauf");
   const prep = interviews.data?.[0];
 
   if (!job.data) {
@@ -181,12 +182,12 @@ function JobDetail() {
         {job.data.source && <span className="text-muted-foreground">Quelle: {job.data.source}</span>}
       </div>
 
-      <Tabs defaultValue="match">
+      <Tabs defaultValue={typeof window !== "undefined" && window.location.hash === "#unterlagen" ? "unterlagen" : "match"}>
         <TabsList className="flex-wrap">
           <TabsTrigger value="match">Match-Analyse</TabsTrigger>
           <TabsTrigger value="unternehmen">Unternehmen</TabsTrigger>
           <TabsTrigger value="strategie">Strategie</TabsTrigger>
-          <TabsTrigger value="unterlagen">Anschreiben</TabsTrigger>
+          <TabsTrigger value="unterlagen">Unterlagen</TabsTrigger>
           <TabsTrigger value="interview">Interview</TabsTrigger>
           <TabsTrigger value="ausschreibung">Ausschreibung</TabsTrigger>
         </TabsList>
