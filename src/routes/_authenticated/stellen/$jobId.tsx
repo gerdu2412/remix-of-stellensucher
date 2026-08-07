@@ -118,6 +118,7 @@ function JobDetail() {
   const matchData = match.data;
   const dossier = (company.data?.dossier ?? {}) as Record<string, string>;
   const coverLetter = documents.data?.find((d) => d.document_type === "anschreiben");
+  const tailoredCv = documents.data?.find((d) => d.document_type === "lebenslauf");
   const prep = interviews.data?.[0];
 
   if (!job.data) {
@@ -181,12 +182,12 @@ function JobDetail() {
         {job.data.source && <span className="text-muted-foreground">Quelle: {job.data.source}</span>}
       </div>
 
-      <Tabs defaultValue="match">
+      <Tabs defaultValue={typeof window !== "undefined" && window.location.hash === "#unterlagen" ? "unterlagen" : "match"}>
         <TabsList className="flex-wrap">
           <TabsTrigger value="match">Match-Analyse</TabsTrigger>
           <TabsTrigger value="unternehmen">Unternehmen</TabsTrigger>
           <TabsTrigger value="strategie">Strategie</TabsTrigger>
-          <TabsTrigger value="unterlagen">Anschreiben</TabsTrigger>
+          <TabsTrigger value="unterlagen">Unterlagen</TabsTrigger>
           <TabsTrigger value="interview">Interview</TabsTrigger>
           <TabsTrigger value="ausschreibung">Ausschreibung</TabsTrigger>
         </TabsList>
@@ -533,6 +534,39 @@ function JobDetail() {
               </article>
             ) : (
               <p className="text-sm text-muted-foreground">Noch kein Anschreiben erstellt.</p>
+            )}
+          </Panel>
+          <Panel>
+            <SectionTitle hint="Auf die Stelle zugeschnittene Lebenslauf-Fassung.">Angepasster Lebenslauf</SectionTitle>
+            {tailoredCv ? (
+              <div className="mt-3 space-y-3 text-sm leading-relaxed">
+                <AiNotice>KI-Entwurf, bitte inhaltlich prüfen.</AiNotice>
+                <p className="font-medium">{(tailoredCv.content as Json)["headline"] as string}</p>
+                <p>{(tailoredCv.content as Json)["profile"] as string}</p>
+                <Bullets title="Kernkompetenzen" items={asArray<string>((tailoredCv.content as Json)["key_skills"])} />
+                {asArray<{ company: string; role: string; period: string; highlights: string[] }>(
+                  (tailoredCv.content as Json)["experience"],
+                ).map((e, idx) => (
+                  <div key={idx} className="rounded-md border border-border p-3">
+                    <p className="text-sm font-medium">
+                      {e.role} · {e.company}
+                    </p>
+                    <p className="text-xs text-muted-foreground">{e.period}</p>
+                    <ul className="mt-1.5 list-disc space-y-1 pl-4 text-sm text-muted-foreground">
+                      {(e.highlights ?? []).map((h, i) => (
+                        <li key={i}>{h}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))}
+                <Bullets title="Zertifikate" items={asArray<string>((tailoredCv.content as Json)["certificates"])} />
+                <Bullets title="Sprachen" items={asArray<string>((tailoredCv.content as Json)["languages"])} />
+                <Bullets title="Anpassungen" items={asArray<string>((tailoredCv.content as Json)["adjustments"])} />
+              </div>
+            ) : (
+              <p className="mt-2 text-sm text-muted-foreground">
+                Noch kein angepasster Lebenslauf. Auf der Seite Bewerbungen über „Unterlagen erstellen“ erzeugen.
+              </p>
             )}
           </Panel>
         </TabsContent>
