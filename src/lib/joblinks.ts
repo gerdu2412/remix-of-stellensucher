@@ -55,6 +55,21 @@ export function companyCareersUrl(company: string): string {
   return `https://duckduckgo.com/?q=${enc(`${company} Karriere Stellenangebote Jobs`)}`;
 }
 
+/** Aktuelle Nachrichten zum Unternehmen, begrenzt auf die letzten 6 Monate. */
+export function companyNewsUrl(company: string): string {
+  return `https://www.google.com/search?q=${enc(`${company}`)}&tbm=nws&tbs=qdr:m6`;
+}
+
+/** Weitere Kontextquellen zum Unternehmen (Presse, Bewertungen, Profil). */
+export function companyContextLinks(company: string): { name: string; url: string }[] {
+  return [
+    { name: "Pressemitteilungen (6 Monate)", url: `https://www.google.com/search?q=${enc(`${company} Pressemitteilung`)}&tbm=nws&tbs=qdr:m6` },
+    { name: "LinkedIn-Unternehmensprofil", url: `https://www.linkedin.com/search/results/companies/?keywords=${enc(company)}` },
+    { name: "Kununu-Bewertungen", url: `https://www.kununu.com/de/search?q=${enc(company)}` },
+    { name: "Wikipedia", url: `https://de.wikipedia.org/w/index.php?search=${enc(company)}` },
+  ];
+}
+
 /** Direktsuchen in den fuehrenden Portalen in AT, CH, LI und LU. */
 export function regionalPortalLinks(role: string): PortalLink[] {
   const link = (name: string, url: string, location: string): PortalLink => ({ name, url, query: role, location });

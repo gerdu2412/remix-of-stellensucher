@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { useSimpleChat } from "@/lib/use-simple-chat";
-import { Loader2, Mic, Send, Square } from "lucide-react";
+import { Loader2, Mic, Send, Square, ExternalLink, Newspaper } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { PageHeader, Panel, SectionTitle } from "@/components/shared/ui-bits";
 import { useJobs, useMasterCv } from "@/lib/queries";
 import { useVoiceInput } from "@/lib/use-voice-input";
+import { companyCareersUrl, companyContextLinks, companyNewsUrl, companyWebsiteUrl } from "@/lib/joblinks";
 
 export const Route = createFileRoute("/_authenticated/interview")({
   head: () => ({
@@ -63,6 +64,21 @@ function InterviewPage() {
   );
   const voice = useVoiceInput({ onTranscript, onError });
 
+  const facts = job
+    ? ([
+        ["Unternehmen", job.company],
+        ["Position", job.title],
+        ["Ort", [job.location, job.region, job.country].filter(Boolean).join(", ")],
+        ["Remote-Anteil", job.remote_share],
+        ["Level", job.seniority],
+        ["Gehalt", job.salary_range],
+        ["Ansprechpartner", job.contact_person],
+        ["Veröffentlicht", job.publication_date],
+        ["Bewerbungsfrist", job.deadline],
+        ["Quelle", job.source],
+      ] as [string, string | null | undefined][]).filter(([, value]) => value)
+    : [];
+
   return (
     <div>
       <PageHeader
@@ -70,6 +86,91 @@ function InterviewPage() {
         description="Phase 5: Simulieren Sie ein Gespräch und erhalten Sie nach jeder Antwort Feedback."
       />
       <div className="grid gap-4 lg:grid-cols-[300px_1fr]">
+        {job && (
+          <div className="grid gap-4 lg:col-span-2 lg:grid-cols-2">
+            <Panel className="space-y-2">
+              <SectionTitle>Stellenanzeige</SectionTitle>
+              <p className="text-sm font-medium">
+                {job.title} · {job.company}
+              </p>
+              <div className="max-h-72 overflow-y-auto whitespace-pre-wrap text-sm text-muted-foreground">
+                {job.description?.trim() || "Für diese Stelle ist kein Anzeigentext hinterlegt."}
+              </div>
+              {job.original_url && (
+                <a
+                  href={job.original_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 text-sm text-primary underline"
+                >
+                  <ExternalLink className="size-3.5" /> Originalanzeige öffnen
+                </a>
+              )}
+            </Panel>
+
+            <Panel className="space-y-3">
+              <SectionTitle>Kontext zur Stelle und Firma</SectionTitle>
+              <dl className="grid grid-cols-2 gap-x-3 gap-y-1 text-sm">
+                {facts.map(([label, value]) => (
+                  <div key={label} className="contents">
+                    <dt className="text-muted-foreground">{label}</dt>
+                    <dd className="truncate" title={String(value)}>
+                      {value}
+                    </dd>
+                  </div>
+                ))}
+              </dl>
+              <div className="flex flex-wrap gap-2 pt-1">
+                <a
+                  href={companyWebsiteUrl(job.company)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs hover:bg-accent"
+                >
+                  <ExternalLink className="size-3.5" /> Homepage
+                </a>
+                <a
+                  href={companyCareersUrl(job.company)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs hover:bg-accent"
+                >
+                  <ExternalLink className="size-3.5" /> Karriereseite
+                </a>
+                {job.original_url && (
+                  <a
+                    href={job.original_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs hover:bg-accent"
+                  >
+                    <ExternalLink className="size-3.5" /> Stellenausschreibung
+                  </a>
+                )}
+                <a
+                  href={companyNewsUrl(job.company)}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs hover:bg-accent"
+                >
+                  <Newspaper className="size-3.5" /> Nachrichten (6 Monate)
+                </a>
+                {companyContextLinks(job.company).map((link) => (
+                  <a
+                    key={link.name}
+                    href={link.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 rounded-md border border-border px-2 py-1 text-xs hover:bg-accent"
+                  >
+                    <ExternalLink className="size-3.5" /> {link.name}
+                  </a>
+                ))}
+              </div>
+            </Panel>
+          </div>
+        )}
+
         <Panel className="space-y-4">
           <SectionTitle>Rahmen</SectionTitle>
           <Select value={jobId} onValueChange={setJobId}>
