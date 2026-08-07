@@ -394,6 +394,9 @@ function StellenPage() {
           excluded: profile?.excluded_industries ?? [],
           perQuery: 25,
           providers: activeProviders,
+          customSources: customSources
+            .filter((s) => s.enabled)
+            .map((s) => ({ id: s.id, label: s.label, url: s.url })),
         },
       });
 
@@ -464,6 +467,46 @@ function StellenPage() {
                 </Button>
               </DialogFooter>
             </DialogContent>
+            </Dialog>
+
+            <Dialog open={sourceOpen} onOpenChange={setSourceOpen}>
+              <DialogTrigger asChild>
+                <Button variant="outline">
+                  <Plus className="mr-2 size-4" /> Quelle hinzufügen
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="max-w-lg">
+                <DialogHeader>
+                  <DialogTitle>Eigene Quelle hinzufügen</DialogTitle>
+                  <DialogDescription>
+                    Adresse einer Jobsuche oder Karriereseite. Platzhalter {"{q}"} für den Suchbegriff und {"{ort}"} für
+                    die Region werden bei jeder Suche ersetzt.
+                  </DialogDescription>
+                </DialogHeader>
+                <div className="space-y-3">
+                  <div>
+                    <Label htmlFor="source-label">Name</Label>
+                    <Input
+                      id="source-label"
+                      value={sourceLabel}
+                      onChange={(e) => setSourceLabel(e.target.value)}
+                      placeholder="z. B. Karriereseite Meridian"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="source-url">URL</Label>
+                    <Input
+                      id="source-url"
+                      value={sourceUrl}
+                      onChange={(e) => setSourceUrl(e.target.value)}
+                      placeholder="https://karriere.example.com/jobs?suche={q}&ort={ort}"
+                    />
+                  </div>
+                </div>
+                <DialogFooter>
+                  <Button onClick={addCustomSource}>Quelle speichern</Button>
+                </DialogFooter>
+              </DialogContent>
             </Dialog>
           </div>
         }
