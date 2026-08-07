@@ -28,6 +28,7 @@ import {
 import { aiStructureJob } from "@/lib/ai.functions";
 import { BulkMatchButton } from "@/components/shared/bulk-match";
 import { searchJobFeeds } from "@/lib/jobsearch.functions";
+import { DEFAULT_ACTIVE_PROVIDERS, JOB_PROVIDERS, PROVIDER_GROUP_LABEL, type ProviderGroup } from "@/lib/jobproviders";
 import { companyCareersUrl, companyWebsiteUrl, portalSearchLinks } from "@/lib/joblinks";
 import { useInsertRow, useJobs, useMatches, useSearchProfile } from "@/lib/queries";
 
@@ -99,6 +100,32 @@ function StellenPage() {
   const [newRegion, setNewRegion] = useState("");
   const [fixOpen, setFixOpen] = useState(false);
   const [activeRegions, setActiveRegions] = useState<string[]>(PRIORITY_REGIONS);
+  const PROVIDER_STORAGE_KEY = "careerpilot.stellen.providers";
+  const [activeProviders, setActiveProvidersState] = useState<string[]>(DEFAULT_ACTIVE_PROVIDERS);
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(PROVIDER_STORAGE_KEY);
+      if (stored) setActiveProvidersState(JSON.parse(stored) as string[]);
+    } catch {
+      /* ignorieren */
+    }
+  }, []);
+
+  function setActiveProviders(next: string[]) {
+    setActiveProvidersState(next);
+    try {
+      localStorage.setItem(PROVIDER_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      /* ignorieren */
+    }
+  }
+
+  function toggleProvider(id: string) {
+    setActiveProviders(
+      activeProviders.includes(id) ? activeProviders.filter((p) => p !== id) : [...activeProviders, id],
+    );
+  }
 
   // Letzten Suchlauf lokal speichern, damit die Tabellen bis zur naechsten Aktualisierung erhalten bleiben.
   useEffect(() => {
@@ -312,6 +339,7 @@ function StellenPage() {
           locations: searchLocations.length ? searchLocations : (profile?.regions ?? []),
           excluded: profile?.excluded_industries ?? [],
           perQuery: 25,
+          providers: activeProviders,
         },
       });
 
