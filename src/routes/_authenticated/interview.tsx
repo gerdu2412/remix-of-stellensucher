@@ -1,13 +1,14 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { useSimpleChat } from "@/lib/use-simple-chat";
-import { Loader2, Send } from "lucide-react";
+import { Loader2, Mic, Send, Square } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { PageHeader, Panel, SectionTitle } from "@/components/shared/ui-bits";
 import { useJobs, useMasterCv } from "@/lib/queries";
+import { useVoiceInput } from "@/lib/use-voice-input";
 
 export const Route = createFileRoute("/_authenticated/interview")({
   head: () => ({
@@ -35,6 +36,7 @@ function InterviewPage() {
   const [jobId, setJobId] = useState("");
   const [type, setType] = useState("hr");
   const [input, setInput] = useState("");
+  const [autoSend, setAutoSend] = useState(true);
 
   const job = (jobs.data ?? []).find((j) => j.id === jobId);
   const setup = `Interviewtyp: ${type}. Stelle: ${job ? `${job.title} bei ${job.company}\n${job.description ?? ""}` : "allgemein"}.\nLebenslauf der Kandidatin oder des Kandidaten:\n${cv.data?.extracted_text ?? "(nicht hinterlegt)"}`;
@@ -47,6 +49,19 @@ function InterviewPage() {
     void send(text, setup);
     setInput("");
   }
+
+  const onTranscript = useCallback(
+    (text: string) => {
+      if (autoSend) {
+        void send(text, setup);
+        setInput("");
+      } else {
+        setInput((current) => (current ? `${current} ${text}` : text));
+      }
+    },
+    [autoSend, send, setup],
+  );
+  const voice = useVoiceInput({ onTranscript, onError });
 
   return (
     <div>
@@ -87,6 +102,28 @@ function InterviewPage() {
           <Button variant="outline" className="w-full" onClick={() => submit("Gesamtfeedback")}>
             Gesamtfeedback anfordern
           </Button>
+          <div className="space-y-2 border-t border-border pt-3">
+            <SectionTitle>Spracheingabe</SectionTitle>
+            <Button
+              variant={voice.isRecording ? "destructive" : "outline"}
+              className="w-full"
+              onClick={voice.toggle}
+              disabled={voice.isTranscribing}
+            >
+              {voice.isTranscribing ? (
+                <Loader2 className="mr-2 size-4 animate-spin" />
+              ) : voice.isRecording ? (
+                <Square className="mr-2 size-4" />
+              ) : (
+                <Mic className="mr-2 size-4" />
+              )}
+              {voice.isTranscribing ? "Wird transkribiert …" : voice.isRecording ? "Aufnahme stoppen" : "Antwort sprechen"}
+            </Button>
+            <label className="flex items-center gap-2 text-xs text-muted-foreground">
+              <input type="checkbox" checked={autoSend} onChange={(e) => setAutoSend(e.target.checked)} />
+              Gesprochene Antwort direkt senden
+            </label>
+          </div>
         </Panel>
 
         <Panel className="flex min-h-[60vh] flex-col">
@@ -118,6 +155,21 @@ function InterviewPage() {
             }}
           >
             <Input value={input} onChange={(e) => setInput(e.target.value)} placeholder="Ihre Antwort …" />
+            <Button
+              type="button"
+              variant={voice.isRecording ? "destructive" : "outline"}
+              onClick={voice.toggle}
+              disabled={voice.isTranscribing}
+              aria-label={voice.isRecording ? "Aufnahme stoppen" : "Antwort sprechen"}
+            >
+              {voice.isTranscribing ? (
+                <Loader2 className="size-4 animate-spin" />
+              ) : voice.isRecording ? (
+                <Square className="size-4" />
+              ) : (
+                <Mic className="size-4" />
+              )}
+            </Button>
             <Button type="submit" disabled={isLoading} aria-label="Senden">
               <Send className="size-4" />
             </Button>
