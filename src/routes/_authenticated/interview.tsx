@@ -2,7 +2,7 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useSimpleChat } from "@/lib/use-simple-chat";
-import { Loader2, Mic, Send, Square, ExternalLink, Newspaper, Sparkles } from "lucide-react";
+import { Loader2, Mic, Send, Square, ExternalLink, Newspaper, Sparkles, Volume2, VolumeX } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -40,6 +40,35 @@ function InterviewPage() {
   const [type, setType] = useState("hr");
   const [input, setInput] = useState("");
   const [autoSend, setAutoSend] = useState(true);
+  const SPEECH_STORAGE_KEY = "careerpilot.interview.speech";
+  const [speechOn, setSpeechOn] = useState(true);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
+  const spokenRef = useRef<Set<string>>(new Set());
+
+  useEffect(() => {
+    try {
+      const stored = localStorage.getItem(SPEECH_STORAGE_KEY);
+      if (stored !== null) setSpeechOn(stored === "1");
+    } catch {
+      /* ignorieren */
+    }
+  }, []);
+
+  function stopSpeech() {
+    audioRef.current?.pause();
+    audioRef.current = null;
+  }
+
+  function toggleSpeech() {
+    const next = !speechOn;
+    setSpeechOn(next);
+    if (!next) stopSpeech();
+    try {
+      localStorage.setItem(SPEECH_STORAGE_KEY, next ? "1" : "0");
+    } catch {
+      /* ignorieren */
+    }
+  }
 
   const job = (jobs.data ?? []).find((j) => j.id === jobId);
   const setup = `Interviewtyp: ${type}. Stelle: ${job ? `${job.title} bei ${job.company}\n${job.description ?? ""}` : "allgemein"}.\nLebenslauf der Kandidatin oder des Kandidaten:\n${cv.data?.extracted_text ?? "(nicht hinterlegt)"}`;
