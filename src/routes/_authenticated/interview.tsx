@@ -365,6 +365,16 @@ function InterviewPage() {
               Gesprochene Antwort direkt senden
             </label>
           </div>
+          <div className="space-y-2 border-t border-border pt-3">
+            <SectionTitle>Sprachausgabe</SectionTitle>
+            <Button variant={speechOn ? "default" : "outline"} className="w-full" onClick={toggleSpeech}>
+              {speechOn ? <Volume2 className="mr-2 size-4" /> : <VolumeX className="mr-2 size-4" />}
+              {speechOn ? "Fragen werden vorgelesen" : "Sprache deaktiviert"}
+            </Button>
+            <p className="text-xs text-muted-foreground">
+              Fragen und Feedback werden akustisch ausgegeben. Über den Button lässt sich die Sprache abschalten.
+            </p>
+          </div>
         </Panel>
 
         <Panel className="flex min-h-[60vh] flex-col">
