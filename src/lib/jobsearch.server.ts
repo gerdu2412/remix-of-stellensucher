@@ -1,5 +1,6 @@
 import {
   browserCrawlersEnabled,
+  crawlCustomSource,
   crawlIndeed,
   crawlLinkedIn,
   crawlStepstoneDe,
