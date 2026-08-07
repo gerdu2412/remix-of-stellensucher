@@ -509,11 +509,74 @@ function StellenPage() {
               </AccordionContent>
           </AccordionItem>
 
-          <AccordionItem value="quellen" className="border-0">
-            <AccordionTrigger className="py-1 hover:no-underline" />
+          <AccordionItem value="apis" className="border-0 border-b border-border">
+            <AccordionTrigger className="py-3 hover:no-underline">
+              <div className="text-left">
+                <p className="font-display text-sm font-semibold">Quellen und APIs aktivieren</p>
+                <p className="text-xs font-normal text-muted-foreground">
+                  {activeProviders.length} von {JOB_PROVIDERS.length} Quellen aktiv
+                </p>
+              </div>
+            </AccordionTrigger>
+            <AccordionContent className="pt-2">
+              <div className="mb-3 flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() => setActiveProviders(DEFAULT_ACTIVE_PROVIDERS)}
+                >
+                  Alle aktivieren
+                </Button>
+                <Button type="button" size="sm" variant="outline" onClick={() => setActiveProviders([])}>
+                  Alle deaktivieren
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  onClick={() =>
+                    setActiveProviders(JOB_PROVIDERS.filter((p) => !p.needsKey).map((p) => p.id))
+                  }
+                >
+                  Nur kostenlose Quellen
+                </Button>
+              </div>
+              <div className="space-y-4">
+                {(["amtlich", "crawler", "browser", "aggregator"] as ProviderGroup[]).map((group) => (
+                  <div key={group}>
+                    <p className="text-xs uppercase tracking-wide text-muted-foreground">
+                      {PROVIDER_GROUP_LABEL[group]}
+                    </p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {JOB_PROVIDERS.filter((p) => p.group === group).map((p) => {
+                        const active = activeProviders.includes(p.id);
+                        return (
+                          <Button
+                            key={p.id}
+                            type="button"
+                            size="sm"
+                            variant={active ? "default" : "outline"}
+                            onClick={() => toggleProvider(p.id)}
+                            aria-pressed={active}
+                          >
+                            {p.label}
+                            <span className="ml-2 text-xs opacity-70">{active ? "aktiv" : "aus"}</span>
+                          </Button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <p className="mt-3 text-xs text-muted-foreground">
+                Quellen mit Schlüsselbedarf laufen nur, wenn der passende API-Schlüssel hinterlegt ist. Die Auswahl wird
+                lokal gespeichert und gilt für die nächste Suche.
+              </p>
+            </AccordionContent>
           </AccordionItem>
-        </Accordion>
-      </Panel>
+
+          <AccordionItem value="quellen" className="border-0">
             <AccordionTrigger className="py-1 hover:no-underline">
               <div className="text-left">
                 <p className="font-display text-sm font-semibold">Durchsuchte Quellen</p>
