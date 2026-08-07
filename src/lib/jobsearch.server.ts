@@ -122,7 +122,9 @@ export async function searchFeeds(input: {
   locations: string[];
   excluded: string[];
   perQuery: number;
+  providers?: string[];
 }): Promise<FeedSearchResult> {
+  const enabled = (id: string) => !input.providers || input.providers.includes(id);
   const roles = input.roles.filter(Boolean).slice(0, 16);
   const locations = input.locations.filter(Boolean).slice(0, 3);
   const combos: { query: string; location: string }[] = [];
@@ -137,7 +139,7 @@ export async function searchFeeds(input: {
   const sources: FeedSourceStat[] = [];
   const found = new Map<string, FoundJob>();
 
-  for (const combo of combos.slice(0, 24)) {
+  for (const combo of enabled("arbeitsagentur") ? combos.slice(0, 24) : []) {
     try {
       const { list, url, available } = await fetchList(combo.query, combo.location, input.perQuery);
       let matched = 0;
