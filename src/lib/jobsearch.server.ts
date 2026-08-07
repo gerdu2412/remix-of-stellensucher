@@ -124,6 +124,7 @@ export async function searchFeeds(input: {
   excluded: string[];
   perQuery: number;
   providers?: string[] | undefined;
+  customSources?: { id: string; label: string; url: string }[] | undefined;
 }): Promise<FeedSearchResult> {
   const enabled = (id: string) => !input.providers || input.providers.includes(id);
   const roles = input.roles.filter(Boolean).slice(0, 16);
@@ -211,6 +212,17 @@ export async function searchFeeds(input: {
 
   // --- Crawler: DACH, Liechtenstein, Luxemburg, Meta-Portale ---
   const crawlerTargets: { label: string; location: string; role: string; run: () => Promise<CrawlResult> }[] = [];
+  for (const custom of input.customSources ?? []) {
+    for (const role of activeRoles.slice(0, 6)) {
+      crawlerTargets.push({
+        label: custom.label,
+        location: primaryLocation || "eigene Quelle",
+        role,
+        run: () => crawlCustomSource(custom.label, custom.url, role, primaryLocation),
+      });
+      if (!/\{q\}|\{ort\}/i.test(custom.url)) break; // Statische URL nur einmal abrufen.
+    }
+  }
   for (const role of activeRoles) {
     if (enabled("stepstone-at")) crawlerTargets.push({ label: "StepStone Österreich", location: "Österreich", role, run: () => crawlStepstoneAt(role, "") });
     if (enabled("jobs-ch")) crawlerTargets.push({ label: "jobs.ch", location: "Schweiz", role, run: () => crawlJobsCh(role, "") });
