@@ -2,12 +2,12 @@ import { z } from "zod";
 
 // Modelle liefern gelegentlich fehlende oder null-Felder. Tolerante Primitive
 // verhindern, dass die gesamte KI-Antwort verworfen wird.
-// Wichtig: nur .nullable() (nicht .optional()/.nullish()), da OpenAI im
-// strict-JSON-Schema-Modus jedes Property in "required" erwartet.
-const str = () => z.string().nullable().transform((v) => v ?? "");
-const num = () => z.coerce.number().nullable().transform((v) => v ?? 0);
-const list = <T extends z.ZodTypeAny>(item: T) =>
-  z.array(item).nullable().transform((v) => v ?? []);
+// Wichtig: keine .optional()/.nullish()/.transform()-Wrapper. OpenAI verlangt im
+// strict-JSON-Schema-Modus, dass jedes Property in "required" steht; Wrapper
+// führen dazu, dass Felder aus "required" fallen und die Anfrage mit 400 scheitert.
+const str = () => z.string();
+const num = () => z.number();
+const list = <T extends z.ZodTypeAny>(item: T) => z.array(item);
 
 export const GUARDRAIL =
   "Du bist ein Karriere- und Bewerbungsexperte für erfahrene Fach- und Führungskräfte im deutschsprachigen Raum. " +
