@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState } from "react";
-import { useChat } from "@ai-sdk/react";
+import { useCallback, useState } from "react";
+import { useSimpleChat } from "@/lib/use-simple-chat";
 import { Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -39,14 +39,12 @@ function InterviewPage() {
   const job = (jobs.data ?? []).find((j) => j.id === jobId);
   const setup = `Interviewtyp: ${type}. Stelle: ${job ? `${job.title} bei ${job.company}\n${job.description ?? ""}` : "allgemein"}.\nLebenslauf der Kandidatin oder des Kandidaten:\n${cv.data?.extracted_text ?? "(nicht hinterlegt)"}`;
 
-  const { messages, sendMessage, status } = useChat({
-    onError: (error) => toast.error(error.message),
-  });
-  const isLoading = status === "submitted" || status === "streaming";
+  const onError = useCallback((message: string) => toast.error(message), []);
+  const { messages, send, isLoading } = useSimpleChat(onError);
 
   function submit(text: string) {
     if (!text.trim()) return;
-    sendMessage({ text }, { body: { setup } });
+    void send(text, setup);
     setInput("");
   }
 
@@ -107,7 +105,7 @@ function InterviewPage() {
                     : "max-w-[85%] rounded-lg border border-border bg-card px-4 py-2 text-sm"
                 }
               >
-                {message.parts.map((part, i) => (part.type === "text" ? <span key={i}>{part.text}</span> : null))}
+                <span className="whitespace-pre-wrap">{message.text}</span>
               </div>
             ))}
             {isLoading && <Loader2 className="size-4 animate-spin text-muted-foreground" />}
