@@ -2,6 +2,7 @@ import { generateText, Output } from "ai";
 import type { z } from "zod";
 import { createLovableAiGatewayProvider, DEFAULT_MODEL, requireGatewayKey } from "./ai-gateway.server";
 import { GUARDRAIL } from "./ai-schemas";
+import { HUMAN_STYLE_RULES, humanizeDeep, humanizeText } from "./ai-style.server";
 
 export async function runStructured<T extends z.ZodTypeAny>(
   schema: T,
@@ -11,11 +12,11 @@ export async function runStructured<T extends z.ZodTypeAny>(
   try {
     const { output } = await generateText({
       model: gateway(DEFAULT_MODEL),
-      system: GUARDRAIL,
+      system: `${GUARDRAIL}\n\n${HUMAN_STYLE_RULES}`,
       prompt,
       output: Output.object({ schema }),
     });
-    return output as z.infer<T>;
+    return humanizeDeep(output) as z.infer<T>;
   } catch (error) {
     throw mapGatewayError(error);
   }
@@ -26,10 +27,10 @@ export async function runText(prompt: string, system?: string): Promise<string> 
   try {
     const { text } = await generateText({
       model: gateway(DEFAULT_MODEL),
-      system: system ?? GUARDRAIL,
+      system: `${system ?? GUARDRAIL}\n\n${HUMAN_STYLE_RULES}`,
       prompt,
     });
-    return text;
+    return humanizeText(text);
   } catch (error) {
     throw mapGatewayError(error);
   }
