@@ -155,3 +155,21 @@ export const aiAnswerFeedback = createServerFn({ method: "POST" })
       `Bewerte die folgende Interviewantwort nach Klarheit, Struktur, Relevanz, Konkretheit, Glaubwürdigkeit, Wirkung, Länge und Bezug zur Stelle. Gib einen Score von 0 bis 100.\n\nSTELLE:\n${data.jobText}\n\nFRAGE:\n${data.question}\n\nANTWORT:\n${data.answer}`,
     );
   });
+
+export const aiTailoredCv = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) =>
+    z
+      .object({
+        cvText: z.string().min(20),
+        jobText: z.string().min(20),
+        matchContext: z.string().default(""),
+      })
+      .parse(input),
+  )
+  .handler(async ({ data }) => {
+    const { runStructured } = await import("./ai-runner.server");
+    return runStructured(
+      tailoredCvSchema,
+      `Erstelle eine auf die Zielstelle zugeschnittene Fassung des Lebenslaufs. Nutze ausschließlich Inhalte aus dem vorhandenen Lebenslauf, ordne sie nach Relevanz für die Stelle, schärfe Formulierungen und hebe passende Erfolge hervor. Erfinde nichts. Im Feld adjustments beschreibe kurz, welche Anpassungen gegenüber dem Master-Lebenslauf vorgenommen wurden.\n\nLEBENSLAUF:\n${data.cvText}\n\nSTELLE:\n${data.jobText}\n\nMATCH-ANALYSE:\n${data.matchContext}`,
+    );
+  });
