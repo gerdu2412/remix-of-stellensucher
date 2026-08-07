@@ -76,6 +76,29 @@ function fromJsonLd(job: any, fallbackCountry: string): CrawledJob | null {
   };
 }
 
+/**
+ * Eigene Quelle: beliebige Such- oder Karriereseite.
+ * Platzhalter in der URL: {q} = Suchbegriff, {ort} = Region.
+ */
+export async function crawlCustomSource(
+  label: string,
+  template: string,
+  role: string,
+  location: string,
+): Promise<CrawlResult> {
+  const hasPlaceholder = /\{q\}|\{ort\}/i.test(template);
+  const url = hasPlaceholder
+    ? template
+        .replace(/\{q\}/gi, encodeURIComponent(role))
+        .replace(/\{ort\}/gi, encodeURIComponent(location))
+    : template;
+  const html = await getHtml(url);
+  const jobs = jsonLdJobs(html)
+    .map((j) => fromJsonLd(j, ""))
+    .filter((j): j is CrawledJob => Boolean(j));
+  return { source: label, url, available: jobs.length, jobs };
+}
+
 /** jobs.ch – Schweiz und (per Suchbegriff) Liechtenstein. */
 export async function crawlJobsCh(role: string, location: string): Promise<CrawlResult> {
   const term = [role, location].filter(Boolean).join(" ");
