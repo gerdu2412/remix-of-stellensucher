@@ -1,6 +1,6 @@
 import { generateText, Output } from "ai";
 import type { z } from "zod";
-import { createLovableAiGatewayProvider, DEFAULT_MODEL, requireGatewayKey } from "./ai-gateway.server";
+import { createChatModel } from "./ai-gateway.server";
 import { GUARDRAIL } from "./ai-schemas";
 import { HUMAN_STYLE_RULES, humanizeDeep, humanizeText } from "./ai-style.server";
 
@@ -8,10 +8,9 @@ export async function runStructured<T extends z.ZodTypeAny>(
   schema: T,
   prompt: string,
 ): Promise<z.infer<T>> {
-  const gateway = createLovableAiGatewayProvider(requireGatewayKey());
   try {
     const { output } = await generateText({
-      model: gateway(DEFAULT_MODEL),
+      model: createChatModel(),
       system: `${GUARDRAIL}\n\n${HUMAN_STYLE_RULES}`,
       prompt,
       output: Output.object({ schema }),
@@ -23,10 +22,9 @@ export async function runStructured<T extends z.ZodTypeAny>(
 }
 
 export async function runText(prompt: string, system?: string): Promise<string> {
-  const gateway = createLovableAiGatewayProvider(requireGatewayKey());
   try {
     const { text } = await generateText({
-      model: gateway(DEFAULT_MODEL),
+      model: createChatModel(),
       system: `${system ?? GUARDRAIL}\n\n${HUMAN_STYLE_RULES}`,
       prompt,
     });
