@@ -612,6 +612,9 @@ function StellenPage() {
                 <p className="font-display text-sm font-semibold">Quellen und APIs aktivieren</p>
                 <p className="text-xs font-normal text-muted-foreground">
                   {activeProviders.length} von {JOB_PROVIDERS.length} Quellen aktiv
+                  {customSources.length > 0
+                    ? ` · ${customSources.filter((s) => s.enabled).length} von ${customSources.length} eigenen Quellen aktiv`
+                    : ""}
                 </p>
               </div>
             </AccordionTrigger>
@@ -665,6 +668,53 @@ function StellenPage() {
                     </div>
                   </div>
                 ))}
+              </div>
+              <div className="mt-4">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">Eigene Quellen</p>
+                {customSources.length === 0 ? (
+                  <p className="mt-2 text-xs text-muted-foreground">
+                    Noch keine eigene Quelle gespeichert – oben über „Quelle hinzufügen“ anlegen.
+                  </p>
+                ) : (
+                  <div className="mt-2 space-y-2">
+                    {customSources.map((s) => (
+                      <div
+                        key={s.id}
+                        className="flex flex-wrap items-center gap-2 rounded-md border border-border px-3 py-2"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-sm font-medium">{s.label}</p>
+                          <a
+                            href={s.url}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="block truncate text-xs text-muted-foreground hover:underline"
+                          >
+                            {s.url}
+                          </a>
+                        </div>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant={s.enabled ? "default" : "outline"}
+                          aria-pressed={s.enabled}
+                          onClick={() => toggleCustomSource(s.id)}
+                        >
+                          {s.enabled ? "aktiv" : "aus"}
+                        </Button>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="outline"
+                          onClick={() => removeCustomSource(s.id)}
+                          aria-label={`${s.label} löschen`}
+                        >
+                          <Trash2 className="mr-2 size-4" /> Löschen
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               <p className="mt-3 text-xs text-muted-foreground">
                 Quellen mit Schlüsselbedarf laufen nur, wenn der passende API-Schlüssel hinterlegt ist. Die Auswahl wird
