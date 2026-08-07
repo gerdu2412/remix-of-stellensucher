@@ -103,8 +103,6 @@ export const companySchema = z.object({
 export const questionsSchema = z.object({
   briefing: z.object({
     company_summary: str(),
-  briefing: z.object({
-    company_summary: str(),
     role_requirements: list(str()),
     challenges: list(str()),
     strengths: list(str()),
