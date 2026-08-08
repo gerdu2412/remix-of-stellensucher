@@ -32,10 +32,16 @@ async function parsePdf(buffer: ArrayBuffer): Promise<string> {
 }
 
 async function parseWord(buffer: ArrayBuffer): Promise<string> {
-  const mammoth = (await import(/* @vite-ignore */ "mammoth/mammoth.browser.js" as string)) as any;
-  const result = await (mammoth as any).extractRawText({ arrayBuffer: buffer });
+  const mod = (await import("mammoth/mammoth.browser.js")) as unknown as {
+    default?: { extractRawText: (o: { arrayBuffer: ArrayBuffer }) => Promise<{ value?: string }> };
+    extractRawText?: (o: { arrayBuffer: ArrayBuffer }) => Promise<{ value?: string }>;
+  };
+  const mammoth = mod.default ?? mod;
+  if (!mammoth?.extractRawText) throw new Error("Word-Datei konnte nicht gelesen werden.");
+  const result = await mammoth.extractRawText({ arrayBuffer: buffer });
   return String(result.value ?? "").trim();
 }
+
 
 async function parseExcel(buffer: ArrayBuffer): Promise<string> {
   const XLSX = await import("xlsx");
